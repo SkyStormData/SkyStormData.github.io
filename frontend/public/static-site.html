@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SkyStorm Data — Ohio Valley Storm Chasing</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="main-nav">
+        <div class="nav-brand">
+            <img src="logo.png" alt="SkyStorm Data" class="nav-logo" onerror="this.style.display='none'">
+            <span class="brand-text">SKYSTORM<span class="brand-accent">DATA</span></span>
+        </div>
+        <div class="nav-links">
+            <a href="#home" class="nav-link active" data-section="home"><i class="fas fa-home"></i> Home</a>
+            <a href="#radar" class="nav-link" data-section="radar"><i class="fas fa-satellite-dish"></i> Radar</a>
+            <a href="#data" class="nav-link" data-section="data"><i class="fas fa-chart-line"></i> Data</a>
+            <a href="#gallery" class="nav-link" data-section="gallery"><i class="fas fa-images"></i> Gallery</a>
+            <a href="#upload" class="nav-link" data-section="upload"><i class="fas fa-upload"></i> Upload</a>
+        </div>
+        <div class="nav-status">
+            <span id="gps-status" class="status-indicator"><i class="fas fa-location-crosshairs"></i> GPS</span>
+            <span id="alert-status" class="status-indicator safe"><i class="fas fa-shield"></i> SAFE</span>
+        </div>
+    </nav>
+
+    <!-- Home Section -->
+    <section id="home" class="section active">
+        <div class="hero">
+            <div class="hero-content">
+                <div class="hero-badge">OHIO VALLEY STORMCHASING</div>
+                <h1 class="hero-title">SKYSTORM <span class="highlight">DATA</span> LLC</h1>
+                <p class="hero-subtitle">Real-Time Storm Tracking & Research Data Collection</p>
+                <div class="hero-stats">
+                    <div class="stat">
+                        <i class="fas fa-bolt"></i>
+                        <span class="stat-value" id="storms-tracked">150+</span>
+                        <span class="stat-label">Storms Tracked</span>
+                    </div>
+                    <div class="stat">
+                        <i class="fas fa-database"></i>
+                        <span class="stat-value">Live</span>
+                        <span class="stat-label">Data Feed</span>
+                    </div>
+                    <div class="stat">
+                        <i class="fas fa-map-marked-alt"></i>
+                        <span class="stat-value">Ohio Valley</span>
+                        <span class="stat-label">Coverage Area</span>
+                    </div>
+                </div>
+            </div>
+            <div class="hero-visual">
+                <div class="radar-animation">
+                    <div class="radar-sweep"></div>
+                    <div class="radar-ring"></div>
+                    <div class="radar-ring"></div>
+                    <div class="radar-ring"></div>
+                    <div class="radar-center"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="about-section">
+            <h2 class="section-title"><i class="fas fa-tornado"></i> What We Do</h2>
+            <div class="about-grid">
+                <div class="about-card">
+                    <div class="card-icon"><i class="fas fa-car"></i></div>
+                    <h3>Storm Intercept</h3>
+                    <p>We chase severe weather across the Ohio Valley, getting up close to supercells, tornadoes, and severe thunderstorms to document and study these powerful systems.</p>
+                </div>
+                <div class="about-card">
+                    <div class="card-icon"><i class="fas fa-chart-area"></i></div>
+                    <h3>Research Data</h3>
+                    <p>Every chase contributes valuable meteorological data — atmospheric soundings, storm structure observations, and environmental parameters that advance severe weather research.</p>
+                </div>
+                <div class="about-card">
+                    <div class="card-icon"><i class="fas fa-broadcast-tower"></i></div>
+                    <h3>Real-Time Reports</h3>
+                    <p>We provide ground-truth reports during active severe weather, helping meteorologists and emergency managers make critical decisions when lives are on the line.</p>
+                </div>
+                <div class="about-card">
+                    <div class="card-icon"><i class="fas fa-video"></i></div>
+                    <h3>Documentation</h3>
+                    <p>High-quality video and photography of severe weather phenomena for research, education, and media — capturing nature's raw power responsibly.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="live-conditions">
+            <h2 class="section-title"><i class="fas fa-thermometer-half"></i> Current Conditions</h2>
+            <div class="conditions-grid" id="home-conditions">
+                <div class="condition-card">
+                    <i class="fas fa-temperature-high"></i>
+                    <span class="condition-value" id="home-temp">--</span>
+                    <span class="condition-label">Temperature</span>
+                </div>
+                <div class="condition-card">
+                    <i class="fas fa-wind"></i>
+                    <span class="condition-value" id="home-wind">--</span>
+                    <span class="condition-label">Wind</span>
+                </div>
+                <div class="condition-card">
+                    <i class="fas fa-tint"></i>
+                    <span class="condition-value" id="home-dewpoint">--</span>
+                    <span class="condition-label">Dew Point</span>
+                </div>
+                <div class="condition-card">
+                    <i class="fas fa-fire"></i>
+                    <span class="condition-value" id="home-cape">--</span>
+                    <span class="condition-label">CAPE</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Radar Section -->
+    <section id="radar" class="section">
+        <div class="radar-container">
+            <div class="radar-header">
+                <h2><i class="fas fa-satellite-dish"></i> Storm Radar</h2>
+                <div class="radar-controls">
+                    <button id="center-location" class="control-btn"><i class="fas fa-crosshairs"></i> Center on Me</button>
+                    <button id="toggle-warnings" class="control-btn active"><i class="fas fa-exclamation-triangle"></i> Warnings</button>
+                    <button id="toggle-radar" class="control-btn active"><i class="fas fa-cloud-rain"></i> Radar</button>
+                </div>
+            </div>
+            <div id="map"></div>
+            <div class="radar-legend">
+                <h4>Warning Types</h4>
+                <div class="legend-item"><span class="legend-color tornado"></span> Tornado Warning</div>
+                <div class="legend-item"><span class="legend-color severe"></span> Severe T-Storm</div>
+                <div class="legend-item"><span class="legend-color flash-flood"></span> Flash Flood</div>
+                <div class="legend-item"><span class="legend-color special"></span> Special Weather</div>
+                <h4>Your Status</h4>
+                <div class="legend-item"><span class="legend-color safe-zone"></span> Safe Zone</div>
+                <div class="legend-item"><span class="legend-color caution-zone"></span> Caution Zone</div>
+                <div class="legend-item"><span class="legend-color danger-zone"></span> Danger Zone</div>
+            </div>
+        </div>
+        <div class="warnings-panel" id="warnings-panel">
+            <h3><i class="fas fa-bell"></i> Active Alerts</h3>
+            <div id="warnings-list">
+                <p class="no-warnings">No active warnings in your area</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Data Section -->
+    <section id="data" class="section">
+        <div class="data-header">
+            <h2><i class="fas fa-chart-line"></i> Atmospheric Data</h2>
+            <span class="data-timestamp">Last Updated: <span id="data-time">--</span></span>
+        </div>
+        <div class="data-dashboard">
+            <div class="data-panel main-panel">
+                <h3><i class="fas fa-wind"></i> Surface Observations</h3>
+                <div class="data-grid">
+                    <div class="data-item">
+                        <div class="data-icon"><i class="fas fa-temperature-high"></i></div>
+                        <div class="data-info">
+                            <span class="data-value" id="temp-value">--</span>
+                            <span class="data-unit">°F</span>
+                        </div>
+                        <span class="data-label">Temperature</span>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-icon"><i class="fas fa-tint"></i></div>
+                        <div class="data-info">
+                            <span class="data-value" id="dewpoint-value">--</span>
+                            <span class="data-unit">°F</span>
+                        </div>
+                        <span class="data-label">Dew Point</span>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-icon"><i class="fas fa-wind"></i></div>
+                        <div class="data-info">
+                            <span class="data-value" id="wind-speed">--</span>
+                            <span class="data-unit">mph</span>
+                        </div>
+                        <span class="data-label">Wind Speed</span>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-icon"><i class="fas fa-compass"></i></div>
+                        <div class="data-info">
+                            <span class="data-value" id="wind-dir">--</span>
+                            <span class="data-unit">°</span>
+                        </div>
+                        <span class="data-label">Wind Direction</span>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-icon"><i class="fas fa-gauge-high"></i></div>
+                        <div class="data-info">
+                            <span class="data-value" id="pressure-value">--</span>
+                            <span class="data-unit">mb</span>
+                        </div>
+                        <span class="data-label">Pressure</span>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-icon"><i class="fas fa-droplet"></i></div>
+                        <div class="data-info">
+                            <span class="data-value" id="humidity-value">--</span>
+                            <span class="data-unit">%</span>
+                        </div>
+                        <span class="data-label">Humidity</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="data-panel sounding-panel">
+                <h3><i class="fas fa-layer-group"></i> Sounding Parameters</h3>
+                <div class="sounding-grid">
+                    <div class="sounding-item critical">
+                        <div class="sounding-header">
+                            <span class="sounding-label">CAPE</span>
+                            <span class="sounding-desc">Convective Available Potential Energy</span>
+                        </div>
+                        <div class="sounding-value-container">
+                            <span class="sounding-value" id="cape-value">--</span>
+                            <span class="sounding-unit">J/kg</span>
+                        </div>
+                        <div class="sounding-bar">
+                            <div class="sounding-fill" id="cape-bar"></div>
+                        </div>
+                        <span class="sounding-range">0 - 5000+</span>
+                    </div>
+                    <div class="sounding-item">
+                        <div class="sounding-header">
+                            <span class="sounding-label">LCL</span>
+                            <span class="sounding-desc">Lifted Condensation Level</span>
+                        </div>
+                        <div class="sounding-value-container">
+                            <span class="sounding-value" id="lcl-value">--</span>
+                            <span class="sounding-unit">ft AGL</span>
+                        </div>
+                        <div class="sounding-bar">
+                            <div class="sounding-fill" id="lcl-bar"></div>
+                        </div>
+                        <span class="sounding-range">0 - 10000</span>
+                    </div>
+                    <div class="sounding-item">
+                        <div class="sounding-header">
+                            <span class="sounding-label">Lapse Rate</span>
+                            <span class="sounding-desc">700-500mb Temperature Change</span>
+                        </div>
+                        <div class="sounding-value-container">
+                            <span class="sounding-value" id="lapse-value">--</span>
+                            <span class="sounding-unit">°C/km</span>
+                        </div>
+                        <div class="sounding-bar">
+                            <div class="sounding-fill" id="lapse-bar"></div>
+                        </div>
+                        <span class="sounding-range">4 - 9+</span>
+                    </div>
+                    <div class="sounding-item">
+                        <div class="sounding-header">
+                            <span class="sounding-label">CIN</span>
+                            <span class="sounding-desc">Convective Inhibition</span>
+                        </div>
+                        <div class="sounding-value-container">
+                            <span class="sounding-value" id="cin-value">--</span>
+                            <span class="sounding-unit">J/kg</span>
+                        </div>
+                        <div class="sounding-bar inverted">
+                            <div class="sounding-fill" id="cin-bar"></div>
+                        </div>
+                        <span class="sounding-range">0 - 200</span>
+                    </div>
+                    <div class="sounding-item">
+                        <div class="sounding-header">
+                            <span class="sounding-label">LI</span>
+                            <span class="sounding-desc">Lifted Index</span>
+                        </div>
+                        <div class="sounding-value-container">
+                            <span class="sounding-value" id="li-value">--</span>
+                            <span class="sounding-unit">°C</span>
+                        </div>
+                        <div class="sounding-bar inverted">
+                            <div class="sounding-fill" id="li-bar"></div>
+                        </div>
+                        <span class="sounding-range">+10 to -10</span>
+                    </div>
+                    <div class="sounding-item">
+                        <div class="sounding-header">
+                            <span class="sounding-label">SRH</span>
+                            <span class="sounding-desc">Storm Relative Helicity 0-3km</span>
+                        </div>
+                        <div class="sounding-value-container">
+                            <span class="sounding-value" id="srh-value">--</span>
+                            <span class="sounding-unit">m²/s²</span>
+                        </div>
+                        <div class="sounding-bar">
+                            <div class="sounding-fill" id="srh-bar"></div>
+                        </div>
+                        <span class="sounding-range">0 - 400+</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="data-panel threat-panel">
+                <h3><i class="fas fa-exclamation-circle"></i> Threat Assessment</h3>
+                <div class="threat-meter">
+                    <div class="threat-level" id="threat-level">LOW</div>
+                    <div class="threat-bar-container">
+                        <div class="threat-bar" id="threat-bar"></div>
+                    </div>
+                    <div class="threat-labels">
+                        <span>LOW</span>
+                        <span>MODERATE</span>
+                        <span>HIGH</span>
+                        <span>EXTREME</span>
+                    </div>
+                </div>
+                <div class="threat-details" id="threat-details">
+                    <p>Analyzing atmospheric conditions...</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Gallery Section -->
+    <section id="gallery" class="section">
+        <div class="gallery-header">
+            <h2><i class="fas fa-images"></i> Storm Gallery</h2>
+            <p>Documentation from the field — storms we've chased across the Ohio Valley</p>
+        </div>
+        
+        <div class="gallery-tabs">
+            <button class="gallery-tab active" data-tab="videos">Videos</button>
+            <button class="gallery-tab" data-tab="photos">Photos</button>
+        </div>
+
+        <div class="gallery-content" id="videos-gallery">
+            <div class="video-grid" id="video-grid">
+                <!-- Videos will be loaded here -->
+                <div class="add-media-card" id="add-video">
+                    <i class="fas fa-plus"></i>
+                    <span>Add YouTube Video</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="gallery-content hidden" id="photos-gallery">
+            <div class="photo-grid" id="photo-grid">
+                <!-- Photos will be loaded here -->
+                <div class="add-media-card" id="add-photo">
+                    <i class="fas fa-plus"></i>
+                    <span>Add Photo URL</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Media Modal -->
+        <div class="modal" id="media-modal">
+            <div class="modal-content">
+                <span class="modal-close">&times;</span>
+                <h3 id="modal-title">Add Media</h3>
+                <form id="media-form">
+                    <div class="form-group">
+                        <label for="media-url">URL</label>
+                        <input type="url" id="media-url" placeholder="Paste YouTube or image URL" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="media-title">Title</label>
+                        <input type="text" id="media-title" placeholder="Storm description" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="media-date">Date</label>
+                        <input type="date" id="media-date" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="media-location">Location</label>
+                        <input type="text" id="media-location" placeholder="City, State">
+                    </div>
+                    <button type="submit" class="submit-btn">Add to Gallery</button>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- Upload Section -->
+    <section id="upload" class="section">
+        <div class="upload-header">
+            <h2><i class="fas fa-upload"></i> Data Upload</h2>
+            <p>Upload chase data in CSV or JSON format for analysis and display</p>
+        </div>
+
+        <div class="upload-container">
+            <div class="upload-zone" id="upload-zone">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <h3>Drop your data file here</h3>
+                <p>or click to browse</p>
+                <span class="upload-formats">Accepts: CSV, JSON</span>
+                <input type="file" id="file-input" accept=".csv,.json" hidden>
+            </div>
+
+            <div class="upload-preview hidden" id="upload-preview">
+                <div class="preview-header">
+                    <h3><i class="fas fa-file-alt"></i> <span id="file-name">filename.csv</span></h3>
+                    <button id="clear-upload" class="clear-btn"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="preview-content" id="preview-content">
+                    <!-- Data preview will be rendered here -->
+                </div>
+                <div class="preview-actions">
+                    <button id="download-data" class="action-btn"><i class="fas fa-download"></i> Download Processed</button>
+                    <button id="visualize-data" class="action-btn primary"><i class="fas fa-chart-bar"></i> Visualize</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="data-visualization hidden" id="data-visualization">
+            <h3><i class="fas fa-chart-area"></i> Data Visualization</h3>
+            <canvas id="data-chart"></canvas>
+        </div>
+
+        <div class="upload-history">
+            <h3><i class="fas fa-history"></i> Recent Uploads</h3>
+            <div id="upload-history-list">
+                <p class="no-history">No recent uploads</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="main-footer">
+        <div class="footer-content">
+            <div class="footer-brand">
+                <span class="brand-text">SKYSTORM<span class="brand-accent">DATA</span></span>
+                <p>Ohio Valley Storm Chasing</p>
+            </div>
+            <div class="footer-links">
+                <a href="https://www.spc.noaa.gov/" target="_blank">SPC</a>
+                <a href="https://www.weather.gov/" target="_blank">NWS</a>
+                <a href="https://radar.weather.gov/" target="_blank">Radar</a>
+            </div>
+            <div class="footer-social">
+                <a href="#" target="_blank"><i class="fab fa-youtube"></i></a>
+                <a href="#" target="_blank"><i class="fab fa-twitter"></i></a>
+                <a href="#" target="_blank"><i class="fab fa-facebook"></i></a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2024 SkyStorm Data LLC. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
