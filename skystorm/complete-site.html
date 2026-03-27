@@ -1,0 +1,1442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SkyStorm Data — Ohio Valley Storm Chasing</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #12121a;
+            --bg-card: #1a1a25;
+            --bg-card-hover: #222230;
+            --accent-primary: #f5a623;
+            --accent-secondary: #ff6b35;
+            --accent-glow: rgba(245, 166, 35, 0.3);
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0b0;
+            --text-muted: #606070;
+            --danger: #ff3b3b;
+            --warning: #ffcc00;
+            --safe: #00cc66;
+            --tornado: #ff00ff;
+            --severe: #ff6600;
+            --flash-flood: #00ff00;
+            --special: #00ccff;
+            --border-color: #2a2a3a;
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            --radius: 12px;
+            --radius-sm: 8px;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        .main-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem 2rem;
+            background: rgba(10, 10, 15, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-color);
+        }
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .nav-logo {
+            height: 40px;
+            width: auto;
+        }
+        .brand-text {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.25rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+        }
+        .brand-accent { color: var(--accent-primary); }
+        .nav-links { display: flex; gap: 0.5rem; }
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.6rem 1rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.95rem;
+            border-radius: var(--radius-sm);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .nav-link:hover {
+            color: var(--text-primary);
+            background: var(--bg-card);
+        }
+        .nav-link.active {
+            color: var(--accent-primary);
+            background: rgba(245, 166, 35, 0.1);
+        }
+        .nav-status { display: flex; gap: 1rem; }
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.4rem 0.75rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            border-radius: 20px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+        }
+        .status-indicator.safe {
+            color: var(--safe);
+            border-color: var(--safe);
+            box-shadow: 0 0 10px rgba(0, 204, 102, 0.3);
+        }
+        .status-indicator.caution {
+            color: var(--warning);
+            border-color: var(--warning);
+            box-shadow: 0 0 10px rgba(255, 204, 0, 0.3);
+        }
+        .status-indicator.danger {
+            color: var(--danger);
+            border-color: var(--danger);
+            box-shadow: 0 0 10px rgba(255, 59, 59, 0.3);
+            animation: pulse-danger 1s infinite;
+        }
+        @keyframes pulse-danger {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        .section {
+            display: none;
+            min-height: 100vh;
+            padding: 80px 2rem 2rem;
+        }
+        .section.active { display: block; }
+        .section-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.75rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: var(--text-primary);
+        }
+        .section-title i { color: var(--accent-primary); }
+        .hero {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: center;
+            min-height: calc(100vh - 200px);
+            padding: 2rem 0;
+        }
+        .hero-badge {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            color: var(--bg-primary);
+            font-weight: 700;
+            font-size: 0.85rem;
+            letter-spacing: 2px;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+        }
+        .hero-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 3.5rem;
+            font-weight: 900;
+            line-height: 1.1;
+            margin-bottom: 1rem;
+            text-shadow: 0 0 40px var(--accent-glow);
+        }
+        .hero-title .highlight { color: var(--accent-primary); }
+        .hero-subtitle {
+            font-size: 1.4rem;
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+        }
+        .hero-stats { display: flex; gap: 2rem; }
+        .stat {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 1.25rem;
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            border: 1px solid var(--border-color);
+            min-width: 120px;
+        }
+        .stat i {
+            font-size: 1.5rem;
+            color: var(--accent-primary);
+            margin-bottom: 0.5rem;
+        }
+        .stat-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .hero-visual {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .radar-animation {
+            position: relative;
+            width: 350px;
+            height: 350px;
+        }
+        .radar-ring {
+            position: absolute;
+            border: 2px solid var(--accent-primary);
+            border-radius: 50%;
+            opacity: 0.3;
+        }
+        .radar-ring:nth-child(2) { width: 100%; height: 100%; top: 0; left: 0; }
+        .radar-ring:nth-child(3) { width: 66%; height: 66%; top: 17%; left: 17%; }
+        .radar-ring:nth-child(4) { width: 33%; height: 33%; top: 33.5%; left: 33.5%; }
+        .radar-center {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background: var(--accent-primary);
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 20px var(--accent-primary);
+        }
+        .radar-sweep {
+            position: absolute;
+            width: 50%;
+            height: 50%;
+            top: 50%;
+            left: 50%;
+            transform-origin: 0 0;
+            background: linear-gradient(90deg, transparent, var(--accent-glow));
+            animation: radar-spin 4s linear infinite;
+            border-radius: 0 100% 0 0;
+        }
+        @keyframes radar-spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .about-section { padding: 4rem 0; }
+        .about-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+        .about-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 2rem;
+            transition: all 0.3s ease;
+        }
+        .about-card:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--accent-primary);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(245, 166, 35, 0.1);
+        }
+        .card-icon {
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            border-radius: var(--radius);
+            margin-bottom: 1.25rem;
+        }
+        .card-icon i { font-size: 1.5rem; color: var(--bg-primary); }
+        .about-card h3 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.1rem;
+            margin-bottom: 0.75rem;
+        }
+        .about-card p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+        .live-conditions { padding: 3rem 0; }
+        .conditions-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.5rem;
+        }
+        .condition-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 1.5rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+        }
+        .condition-card i {
+            font-size: 2rem;
+            color: var(--accent-primary);
+            margin-bottom: 0.75rem;
+        }
+        .condition-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.75rem;
+            font-weight: 700;
+        }
+        .condition-label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .radar-container { position: relative; height: calc(100vh - 200px); min-height: 500px; }
+        .radar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        .radar-header h2 {
+            font-family: 'Orbitron', sans-serif;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .radar-header h2 i { color: var(--accent-primary); }
+        .radar-controls { display: flex; gap: 0.75rem; }
+        .control-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.6rem 1rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+        .control-btn:hover {
+            background: var(--bg-card-hover);
+            color: var(--text-primary);
+        }
+        .control-btn.active {
+            background: rgba(245, 166, 35, 0.1);
+            border-color: var(--accent-primary);
+            color: var(--accent-primary);
+        }
+        #map {
+            width: 100%;
+            height: calc(100% - 60px);
+            border-radius: var(--radius);
+            border: 1px solid var(--border-color);
+        }
+        .radar-legend {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(10, 10, 15, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem;
+            border-radius: var(--radius);
+            border: 1px solid var(--border-color);
+            z-index: 500;
+        }
+        .radar-legend h4 {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+            margin-top: 0.75rem;
+        }
+        .radar-legend h4:first-child { margin-top: 0; }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.25rem;
+        }
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+        }
+        .legend-color.tornado { background: var(--tornado); }
+        .legend-color.severe { background: var(--severe); }
+        .legend-color.flash-flood { background: var(--flash-flood); }
+        .legend-color.special { background: var(--special); }
+        .legend-color.safe-zone { background: var(--safe); opacity: 0.5; }
+        .legend-color.caution-zone { background: var(--warning); opacity: 0.5; }
+        .legend-color.danger-zone { background: var(--danger); opacity: 0.5; }
+        .warnings-panel {
+            position: absolute;
+            top: 80px;
+            right: 20px;
+            width: 320px;
+            max-height: calc(100% - 120px);
+            overflow-y: auto;
+            background: rgba(10, 10, 15, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem;
+            border-radius: var(--radius);
+            border: 1px solid var(--border-color);
+            z-index: 500;
+        }
+        .warnings-panel h3 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        .warnings-panel h3 i { color: var(--accent-primary); }
+        .warning-item {
+            padding: 0.75rem;
+            background: var(--bg-card);
+            border-radius: var(--radius-sm);
+            margin-bottom: 0.5rem;
+            border-left: 3px solid;
+        }
+        .warning-item.tornado { border-color: var(--tornado); }
+        .warning-item.severe { border-color: var(--severe); }
+        .warning-item.flood { border-color: var(--flash-flood); }
+        .warning-item h4 { font-size: 0.9rem; margin-bottom: 0.25rem; }
+        .warning-item p { font-size: 0.8rem; color: var(--text-secondary); }
+        .no-warnings {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            text-align: center;
+            padding: 1rem;
+        }
+        .data-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+        .data-header h2 {
+            font-family: 'Orbitron', sans-serif;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .data-header h2 i { color: var(--accent-primary); }
+        .data-timestamp { color: var(--text-muted); font-size: 0.9rem; }
+        .data-dashboard {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+        .data-panel {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+        }
+        .data-panel h3 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .data-panel h3 i { color: var(--accent-primary); }
+        .main-panel { grid-column: 1 / 2; }
+        .sounding-panel { grid-column: 2 / 3; grid-row: 1 / 3; }
+        .threat-panel { grid-column: 1 / 2; }
+        .data-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+        }
+        .data-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 1rem;
+            background: var(--bg-secondary);
+            border-radius: var(--radius-sm);
+        }
+        .data-icon {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-card);
+            border-radius: 50%;
+            margin-bottom: 0.5rem;
+        }
+        .data-icon i { color: var(--accent-primary); }
+        .data-info { display: flex; align-items: baseline; gap: 0.25rem; }
+        .data-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+        .data-unit { font-size: 0.85rem; color: var(--text-muted); }
+        .data-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 0.25rem;
+        }
+        .sounding-grid { display: flex; flex-direction: column; gap: 1rem; }
+        .sounding-item {
+            padding: 1rem;
+            background: var(--bg-secondary);
+            border-radius: var(--radius-sm);
+        }
+        .sounding-item.critical {
+            border: 1px solid var(--accent-primary);
+            background: rgba(245, 166, 35, 0.05);
+        }
+        .sounding-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        .sounding-label {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            color: var(--accent-primary);
+        }
+        .sounding-desc { font-size: 0.75rem; color: var(--text-muted); }
+        .sounding-value-container {
+            display: flex;
+            align-items: baseline;
+            gap: 0.25rem;
+            margin-bottom: 0.5rem;
+        }
+        .sounding-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+        .sounding-unit { font-size: 0.85rem; color: var(--text-muted); }
+        .sounding-bar {
+            height: 6px;
+            background: var(--bg-card);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 0.25rem;
+        }
+        .sounding-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--safe), var(--warning), var(--danger));
+            border-radius: 3px;
+            transition: width 0.5s ease;
+            width: 0%;
+        }
+        .sounding-bar.inverted .sounding-fill {
+            background: linear-gradient(90deg, var(--danger), var(--warning), var(--safe));
+        }
+        .sounding-range { font-size: 0.7rem; color: var(--text-muted); }
+        .threat-meter { margin-bottom: 1rem; }
+        .threat-level {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2rem;
+            font-weight: 900;
+            text-align: center;
+            margin-bottom: 0.75rem;
+            transition: color 0.5s ease;
+        }
+        .threat-level.low { color: var(--safe); }
+        .threat-level.moderate { color: var(--warning); }
+        .threat-level.high { color: var(--severe); }
+        .threat-level.extreme { color: var(--danger); animation: pulse-danger 0.5s infinite; }
+        .threat-bar-container {
+            height: 12px;
+            background: var(--bg-secondary);
+            border-radius: 6px;
+            overflow: hidden;
+            margin-bottom: 0.5rem;
+        }
+        .threat-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--safe), var(--warning), var(--severe), var(--danger));
+            border-radius: 6px;
+            transition: width 0.5s ease;
+            width: 20%;
+        }
+        .threat-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+        .threat-details {
+            padding: 1rem;
+            background: var(--bg-secondary);
+            border-radius: var(--radius-sm);
+        }
+        .threat-details p { font-size: 0.9rem; color: var(--text-secondary); }
+        .threat-details ul { margin: 0; padding-left: 1.2rem; }
+        .threat-details li { font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.25rem; }
+        .gallery-header { text-align: center; margin-bottom: 2rem; }
+        .gallery-header h2 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+        .gallery-header h2 i { color: var(--accent-primary); }
+        .gallery-header p { color: var(--text-secondary); }
+        .gallery-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .gallery-tab {
+            padding: 0.75rem 2rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: 600;
+            font-size: 1rem;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .gallery-tab:hover {
+            background: var(--bg-card-hover);
+            color: var(--text-primary);
+        }
+        .gallery-tab.active {
+            background: var(--accent-primary);
+            border-color: var(--accent-primary);
+            color: var(--bg-primary);
+        }
+        .gallery-content { min-height: 400px; }
+        .gallery-content.hidden { display: none; }
+        .video-grid, .photo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 1.5rem;
+        }
+        .video-card, .photo-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        .video-card:hover, .photo-card:hover {
+            border-color: var(--accent-primary);
+            transform: translateY(-5px);
+            box-shadow: var(--shadow);
+        }
+        .video-embed {
+            position: relative;
+            padding-bottom: 56.25%;
+            height: 0;
+        }
+        .video-embed iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        .photo-card img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+        .media-info { padding: 1rem; }
+        .media-info h4 { font-size: 1rem; margin-bottom: 0.25rem; }
+        .media-info p { font-size: 0.85rem; color: var(--text-muted); }
+        .add-media-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 200px;
+            background: var(--bg-card);
+            border: 2px dashed var(--border-color);
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .add-media-card:hover {
+            border-color: var(--accent-primary);
+            background: rgba(245, 166, 35, 0.05);
+        }
+        .add-media-card i {
+            font-size: 2.5rem;
+            color: var(--accent-primary);
+            margin-bottom: 0.75rem;
+        }
+        .add-media-card span { color: var(--text-secondary); font-weight: 600; }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal.active { display: flex; }
+        .modal-content {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 2rem;
+            width: 90%;
+            max-width: 500px;
+            position: relative;
+        }
+        .modal-close {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            font-size: 1.5rem;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+        .modal-close:hover { color: var(--text-primary); }
+        .modal-content h3 {
+            font-family: 'Orbitron', sans-serif;
+            margin-bottom: 1.5rem;
+        }
+        .form-group { margin-bottom: 1rem; }
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-secondary);
+        }
+        .form-group input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 1rem;
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+        }
+        .submit-btn {
+            width: 100%;
+            padding: 0.75rem;
+            background: var(--accent-primary);
+            border: none;
+            border-radius: var(--radius-sm);
+            color: var(--bg-primary);
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .submit-btn:hover { background: var(--accent-secondary); }
+        .upload-header { text-align: center; margin-bottom: 2rem; }
+        .upload-header h2 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+        .upload-header h2 i { color: var(--accent-primary); }
+        .upload-header p { color: var(--text-secondary); }
+        .upload-container { max-width: 800px; margin: 0 auto 2rem; }
+        .upload-zone {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 4rem 2rem;
+            background: var(--bg-card);
+            border: 2px dashed var(--border-color);
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .upload-zone:hover, .upload-zone.dragover {
+            border-color: var(--accent-primary);
+            background: rgba(245, 166, 35, 0.05);
+        }
+        .upload-zone i {
+            font-size: 4rem;
+            color: var(--accent-primary);
+            margin-bottom: 1rem;
+        }
+        .upload-zone h3 {
+            font-family: 'Orbitron', sans-serif;
+            margin-bottom: 0.5rem;
+        }
+        .upload-zone p { color: var(--text-secondary); margin-bottom: 1rem; }
+        .upload-formats {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            padding: 0.5rem 1rem;
+            background: var(--bg-secondary);
+            border-radius: 20px;
+        }
+        .upload-preview {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
+        .upload-preview.hidden { display: none; }
+        .preview-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+        }
+        .preview-header h3 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .preview-header h3 i { color: var(--accent-primary); }
+        .clear-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 1.25rem;
+            transition: color 0.3s ease;
+        }
+        .clear-btn:hover { color: var(--danger); }
+        .preview-content {
+            padding: 1.5rem;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .preview-table { width: 100%; border-collapse: collapse; }
+        .preview-table th, .preview-table td {
+            padding: 0.5rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .preview-table th {
+            background: var(--bg-secondary);
+            font-weight: 600;
+            color: var(--accent-primary);
+        }
+        .preview-actions {
+            display: flex;
+            gap: 1rem;
+            padding: 1rem 1.5rem;
+            border-top: 1px solid var(--border-color);
+        }
+        .action-btn {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.75rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .action-btn:hover { background: var(--bg-card-hover); }
+        .action-btn.primary {
+            background: var(--accent-primary);
+            border-color: var(--accent-primary);
+            color: var(--bg-primary);
+        }
+        .action-btn.primary:hover { background: var(--accent-secondary); }
+        .data-visualization {
+            max-width: 800px;
+            margin: 0 auto 2rem;
+            padding: 1.5rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+        }
+        .data-visualization.hidden { display: none; }
+        .data-visualization h3 {
+            font-family: 'Orbitron', sans-serif;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .data-visualization h3 i { color: var(--accent-primary); }
+        #data-chart { width: 100%; height: 300px; }
+        .upload-history { max-width: 800px; margin: 0 auto; }
+        .upload-history h3 {
+            font-family: 'Orbitron', sans-serif;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .upload-history h3 i { color: var(--accent-primary); }
+        .no-history {
+            color: var(--text-muted);
+            text-align: center;
+            padding: 2rem;
+            background: var(--bg-card);
+            border-radius: var(--radius);
+        }
+        .main-footer {
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border-color);
+            padding: 2rem;
+        }
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .footer-brand .brand-text { font-size: 1.25rem; }
+        .footer-brand p { color: var(--text-muted); font-size: 0.85rem; }
+        .footer-links { display: flex; gap: 1.5rem; }
+        .footer-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.3s ease;
+        }
+        .footer-links a:hover { color: var(--accent-primary); }
+        .footer-social { display: flex; gap: 1rem; }
+        .footer-social a {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 50%;
+            color: var(--text-secondary);
+            transition: all 0.3s ease;
+        }
+        .footer-social a:hover {
+            background: var(--accent-primary);
+            border-color: var(--accent-primary);
+            color: var(--bg-primary);
+        }
+        .footer-bottom {
+            text-align: center;
+            padding-top: 1.5rem;
+            margin-top: 1.5rem;
+            border-top: 1px solid var(--border-color);
+        }
+        .footer-bottom p { color: var(--text-muted); font-size: 0.85rem; }
+        @media (max-width: 1024px) {
+            .hero { grid-template-columns: 1fr; text-align: center; }
+            .hero-stats { justify-content: center; }
+            .hero-visual { display: none; }
+            .data-dashboard { grid-template-columns: 1fr; }
+            .sounding-panel { grid-column: 1; grid-row: auto; }
+        }
+        @media (max-width: 768px) {
+            .main-nav { flex-wrap: wrap; padding: 0.5rem 1rem; }
+            .nav-links {
+                order: 3;
+                width: 100%;
+                justify-content: center;
+                padding-top: 0.5rem;
+                border-top: 1px solid var(--border-color);
+                margin-top: 0.5rem;
+            }
+            .nav-link span { display: none; }
+            .nav-status { gap: 0.5rem; }
+            .section { padding: 100px 1rem 1rem; }
+            .hero-title { font-size: 2.5rem; }
+            .conditions-grid { grid-template-columns: repeat(2, 1fr); }
+            .data-grid { grid-template-columns: repeat(2, 1fr); }
+            .warnings-panel { position: static; width: 100%; margin-top: 1rem; }
+            .footer-content { flex-direction: column; gap: 1.5rem; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="main-nav">
+        <div class="nav-brand">
+            <span class="brand-text">SKYSTORM<span class="brand-accent">DATA</span></span>
+        </div>
+        <div class="nav-links">
+            <a class="nav-link active" data-section="home"><i class="fas fa-home"></i> <span>Home</span></a>
+            <a class="nav-link" data-section="radar"><i class="fas fa-satellite-dish"></i> <span>Radar</span></a>
+            <a class="nav-link" data-section="data"><i class="fas fa-chart-line"></i> <span>Data</span></a>
+            <a class="nav-link" data-section="gallery"><i class="fas fa-images"></i> <span>Gallery</span></a>
+            <a class="nav-link" data-section="upload"><i class="fas fa-upload"></i> <span>Upload</span></a>
+        </div>
+        <div class="nav-status">
+            <span id="gps-status" class="status-indicator"><i class="fas fa-location-crosshairs"></i> GPS</span>
+            <span id="alert-status" class="status-indicator safe"><i class="fas fa-shield"></i> SAFE</span>
+        </div>
+    </nav>
+
+    <section id="home" class="section active">
+        <div class="hero">
+            <div class="hero-content">
+                <div class="hero-badge">OHIO VALLEY STORMCHASING</div>
+                <h1 class="hero-title">SKYSTORM <span class="highlight">DATA</span> LLC</h1>
+                <p class="hero-subtitle">Real-Time Storm Tracking & Research Data Collection</p>
+                <div class="hero-stats">
+                    <div class="stat"><i class="fas fa-bolt"></i><span class="stat-value">150+</span><span class="stat-label">Storms Tracked</span></div>
+                    <div class="stat"><i class="fas fa-database"></i><span class="stat-value">Live</span><span class="stat-label">Data Feed</span></div>
+                    <div class="stat"><i class="fas fa-map-marked-alt"></i><span class="stat-value">Ohio Valley</span><span class="stat-label">Coverage Area</span></div>
+                </div>
+            </div>
+            <div class="hero-visual">
+                <div class="radar-animation">
+                    <div class="radar-sweep"></div>
+                    <div class="radar-ring"></div>
+                    <div class="radar-ring"></div>
+                    <div class="radar-ring"></div>
+                    <div class="radar-center"></div>
+                </div>
+            </div>
+        </div>
+        <div class="about-section">
+            <h2 class="section-title"><i class="fas fa-tornado"></i> What We Do</h2>
+            <div class="about-grid">
+                <div class="about-card"><div class="card-icon"><i class="fas fa-car"></i></div><h3>Storm Intercept</h3><p>We chase severe weather across the Ohio Valley, getting up close to supercells, tornadoes, and severe thunderstorms to document and study these powerful systems.</p></div>
+                <div class="about-card"><div class="card-icon"><i class="fas fa-chart-area"></i></div><h3>Research Data</h3><p>Every chase contributes valuable meteorological data — atmospheric soundings, storm structure observations, and environmental parameters that advance severe weather research.</p></div>
+                <div class="about-card"><div class="card-icon"><i class="fas fa-broadcast-tower"></i></div><h3>Real-Time Reports</h3><p>We provide ground-truth reports during active severe weather, helping meteorologists and emergency managers make critical decisions when lives are on the line.</p></div>
+                <div class="about-card"><div class="card-icon"><i class="fas fa-video"></i></div><h3>Documentation</h3><p>High-quality video and photography of severe weather phenomena for research, education, and media — capturing nature's raw power responsibly.</p></div>
+            </div>
+        </div>
+        <div class="live-conditions">
+            <h2 class="section-title"><i class="fas fa-thermometer-half"></i> Current Conditions</h2>
+            <div class="conditions-grid">
+                <div class="condition-card"><i class="fas fa-temperature-high"></i><span class="condition-value" id="home-temp">--</span><span class="condition-label">Temperature</span></div>
+                <div class="condition-card"><i class="fas fa-wind"></i><span class="condition-value" id="home-wind">--</span><span class="condition-label">Wind</span></div>
+                <div class="condition-card"><i class="fas fa-tint"></i><span class="condition-value" id="home-dewpoint">--</span><span class="condition-label">Dew Point</span></div>
+                <div class="condition-card"><i class="fas fa-fire"></i><span class="condition-value" id="home-cape">--</span><span class="condition-label">CAPE</span></div>
+            </div>
+        </div>
+    </section>
+
+    <section id="radar" class="section">
+        <div class="radar-container">
+            <div class="radar-header">
+                <h2><i class="fas fa-satellite-dish"></i> Storm Radar</h2>
+                <div class="radar-controls">
+                    <button id="center-location" class="control-btn"><i class="fas fa-crosshairs"></i> Center on Me</button>
+                    <button id="toggle-warnings" class="control-btn active"><i class="fas fa-exclamation-triangle"></i> Warnings</button>
+                    <button id="toggle-radar" class="control-btn active"><i class="fas fa-cloud-rain"></i> Radar</button>
+                </div>
+            </div>
+            <div id="map"></div>
+            <div class="radar-legend">
+                <h4>Warning Types</h4>
+                <div class="legend-item"><span class="legend-color tornado"></span> Tornado Warning</div>
+                <div class="legend-item"><span class="legend-color severe"></span> Severe T-Storm</div>
+                <div class="legend-item"><span class="legend-color flash-flood"></span> Flash Flood</div>
+                <h4>Your Status</h4>
+                <div class="legend-item"><span class="legend-color safe-zone"></span> Safe Zone</div>
+                <div class="legend-item"><span class="legend-color caution-zone"></span> Caution Zone</div>
+                <div class="legend-item"><span class="legend-color danger-zone"></span> Danger Zone</div>
+            </div>
+        </div>
+        <div class="warnings-panel">
+            <h3><i class="fas fa-bell"></i> Active Alerts</h3>
+            <div id="warnings-list"><p class="no-warnings">No active warnings in your area</p></div>
+        </div>
+    </section>
+
+    <section id="data" class="section">
+        <div class="data-header">
+            <h2><i class="fas fa-chart-line"></i> Atmospheric Data</h2>
+            <span class="data-timestamp">Last Updated: <span id="data-time">--</span></span>
+        </div>
+        <div class="data-dashboard">
+            <div class="data-panel main-panel">
+                <h3><i class="fas fa-wind"></i> Surface Observations</h3>
+                <div class="data-grid">
+                    <div class="data-item"><div class="data-icon"><i class="fas fa-temperature-high"></i></div><div class="data-info"><span class="data-value" id="temp-value">--</span><span class="data-unit">°F</span></div><span class="data-label">Temperature</span></div>
+                    <div class="data-item"><div class="data-icon"><i class="fas fa-tint"></i></div><div class="data-info"><span class="data-value" id="dewpoint-value">--</span><span class="data-unit">°F</span></div><span class="data-label">Dew Point</span></div>
+                    <div class="data-item"><div class="data-icon"><i class="fas fa-wind"></i></div><div class="data-info"><span class="data-value" id="wind-speed">--</span><span class="data-unit">mph</span></div><span class="data-label">Wind Speed</span></div>
+                    <div class="data-item"><div class="data-icon"><i class="fas fa-compass"></i></div><div class="data-info"><span class="data-value" id="wind-dir">--</span><span class="data-unit">°</span></div><span class="data-label">Wind Direction</span></div>
+                    <div class="data-item"><div class="data-icon"><i class="fas fa-gauge-high"></i></div><div class="data-info"><span class="data-value" id="pressure-value">--</span><span class="data-unit">mb</span></div><span class="data-label">Pressure</span></div>
+                    <div class="data-item"><div class="data-icon"><i class="fas fa-droplet"></i></div><div class="data-info"><span class="data-value" id="humidity-value">--</span><span class="data-unit">%</span></div><span class="data-label">Humidity</span></div>
+                </div>
+            </div>
+            <div class="data-panel sounding-panel">
+                <h3><i class="fas fa-layer-group"></i> Sounding Parameters</h3>
+                <div class="sounding-grid">
+                    <div class="sounding-item critical"><div class="sounding-header"><span class="sounding-label">CAPE</span><span class="sounding-desc">Convective Available Potential Energy</span></div><div class="sounding-value-container"><span class="sounding-value" id="cape-value">--</span><span class="sounding-unit">J/kg</span></div><div class="sounding-bar"><div class="sounding-fill" id="cape-bar"></div></div></div>
+                    <div class="sounding-item"><div class="sounding-header"><span class="sounding-label">LCL</span><span class="sounding-desc">Lifted Condensation Level</span></div><div class="sounding-value-container"><span class="sounding-value" id="lcl-value">--</span><span class="sounding-unit">ft AGL</span></div></div>
+                    <div class="sounding-item"><div class="sounding-header"><span class="sounding-label">Lapse Rate</span><span class="sounding-desc">700-500mb Temperature Change</span></div><div class="sounding-value-container"><span class="sounding-value" id="lapse-value">--</span><span class="sounding-unit">°C/km</span></div></div>
+                    <div class="sounding-item"><div class="sounding-header"><span class="sounding-label">CIN</span><span class="sounding-desc">Convective Inhibition</span></div><div class="sounding-value-container"><span class="sounding-value" id="cin-value">--</span><span class="sounding-unit">J/kg</span></div></div>
+                    <div class="sounding-item"><div class="sounding-header"><span class="sounding-label">LI</span><span class="sounding-desc">Lifted Index</span></div><div class="sounding-value-container"><span class="sounding-value" id="li-value">--</span><span class="sounding-unit">°C</span></div></div>
+                </div>
+            </div>
+            <div class="data-panel threat-panel">
+                <h3><i class="fas fa-exclamation-circle"></i> Threat Assessment</h3>
+                <div class="threat-meter">
+                    <div class="threat-level" id="threat-level">LOW</div>
+                    <div class="threat-bar-container"><div class="threat-bar" id="threat-bar"></div></div>
+                    <div class="threat-labels"><span>LOW</span><span>MODERATE</span><span>HIGH</span><span>EXTREME</span></div>
+                </div>
+                <div class="threat-details" id="threat-details"><p>Analyzing atmospheric conditions...</p></div>
+            </div>
+        </div>
+    </section>
+
+    <section id="gallery" class="section">
+        <div class="gallery-header">
+            <h2><i class="fas fa-images"></i> Storm Gallery</h2>
+            <p>Documentation from the field — storms we've chased across the Ohio Valley</p>
+        </div>
+        <div class="gallery-tabs">
+            <button class="gallery-tab active" data-tab="videos">Videos</button>
+            <button class="gallery-tab" data-tab="photos">Photos</button>
+        </div>
+        <div class="gallery-content" id="videos-gallery">
+            <div class="video-grid" id="video-grid"></div>
+        </div>
+        <div class="gallery-content hidden" id="photos-gallery">
+            <div class="photo-grid" id="photo-grid"></div>
+        </div>
+        <div class="modal" id="media-modal">
+            <div class="modal-content">
+                <span class="modal-close">&times;</span>
+                <h3 id="modal-title">Add Media</h3>
+                <form id="media-form">
+                    <div class="form-group"><label>URL</label><input type="url" id="media-url" placeholder="Paste YouTube or image URL" required></div>
+                    <div class="form-group"><label>Title</label><input type="text" id="media-title" placeholder="Storm description" required></div>
+                    <div class="form-group"><label>Date</label><input type="date" id="media-date" required></div>
+                    <div class="form-group"><label>Location</label><input type="text" id="media-location" placeholder="City, State"></div>
+                    <button type="submit" class="submit-btn">Add to Gallery</button>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <section id="upload" class="section">
+        <div class="upload-header">
+            <h2><i class="fas fa-upload"></i> Data Upload</h2>
+            <p>Upload chase data in CSV or JSON format for analysis and display</p>
+        </div>
+        <div class="upload-container">
+            <div class="upload-zone" id="upload-zone">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <h3>Drop your data file here</h3>
+                <p>or click to browse</p>
+                <span class="upload-formats">Accepts: CSV, JSON</span>
+                <input type="file" id="file-input" accept=".csv,.json" hidden>
+            </div>
+            <div class="upload-preview hidden" id="upload-preview">
+                <div class="preview-header"><h3><i class="fas fa-file-alt"></i> <span id="file-name">filename.csv</span></h3><button id="clear-upload" class="clear-btn"><i class="fas fa-times"></i></button></div>
+                <div class="preview-content" id="preview-content"></div>
+                <div class="preview-actions">
+                    <button id="download-data" class="action-btn"><i class="fas fa-download"></i> Download Processed</button>
+                    <button id="visualize-data" class="action-btn primary"><i class="fas fa-chart-bar"></i> Visualize</button>
+                </div>
+            </div>
+        </div>
+        <div class="data-visualization hidden" id="data-visualization">
+            <h3><i class="fas fa-chart-area"></i> Data Visualization</h3>
+            <canvas id="data-chart"></canvas>
+        </div>
+    </section>
+
+    <footer class="main-footer">
+        <div class="footer-content">
+            <div class="footer-brand"><span class="brand-text">SKYSTORM<span class="brand-accent">DATA</span></span><p>Ohio Valley Storm Chasing</p></div>
+            <div class="footer-links">
+                <a href="https://www.spc.noaa.gov/" target="_blank">SPC</a>
+                <a href="https://www.weather.gov/" target="_blank">NWS</a>
+                <a href="https://radar.weather.gov/" target="_blank">Radar</a>
+            </div>
+            <div class="footer-social">
+                <a href="#" target="_blank"><i class="fab fa-youtube"></i></a>
+                <a href="#" target="_blank"><i class="fab fa-twitter"></i></a>
+                <a href="#" target="_blank"><i class="fab fa-facebook"></i></a>
+            </div>
+        </div>
+        <div class="footer-bottom"><p>&copy; 2024 SkyStorm Data LLC. All rights reserved.</p></div>
+    </footer>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        let map, userMarker, userCircle, warningLayers = [], radarLayer;
+        let userLat = 39.1031, userLon = -84.5120;
+        let videos = JSON.parse(localStorage.getItem('skystorm_videos')) || [];
+        let photos = JSON.parse(localStorage.getItem('skystorm_photos')) || [];
+        let uploadedData = null, dataChart = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initNavigation();
+            initGPS();
+            initGallery();
+            initUpload();
+            fetchWeatherData();
+            fetchWarnings();
+            setInterval(() => { fetchWeatherData(); fetchWarnings(); }, 300000);
+        });
+
+        function initNavigation() {
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.addEventListener('click', () => {
+                    const sectionId = link.getAttribute('data-section');
+                    document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+                    link.classList.add('active');
+                    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+                    document.getElementById(sectionId).classList.add('active');
+                    if (sectionId === 'radar' && !map) setTimeout(initMap, 100);
+                    if (sectionId === 'radar' && map) setTimeout(() => map.invalidateSize(), 100);
+                });
+            });
+        }
+
+        function initMap() {
+            map = L.map('map', { center: [userLat, userLon], zoom: 8, zoomControl: false });
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { attribution: '© OpenStreetMap, © CartoDB', maxZoom: 19 }).addTo(map);
+            L.control.zoom({ position: 'topright' }).addTo(map);
+            radarLayer = L.tileLayer.wms('https://mesonet.agron.iastate.edu/cgi-bin/wms/nexrad/n0r.cgi', { layers: 'nexrad-n0r-900913', format: 'image/png', transparent: true, opacity: 0.6 }).addTo(map);
+            updateUserPosition(userLat, userLon);
+            document.getElementById('center-location').addEventListener('click', () => map.setView([userLat, userLon], 10));
+            document.getElementById('toggle-warnings').addEventListener('click', (e) => { e.target.classList.toggle('active'); warningLayers.forEach(l => e.target.classList.contains('active') ? l.addTo(map) : map.removeLayer(l)); });
+            document.getElementById('toggle-radar').addEventListener('click', (e) => { e.target.classList.toggle('active'); e.target.classList.contains('active') ? radarLayer.addTo(map) : map.removeLayer(radarLayer); });
+        }
+
+        function updateUserPosition(lat, lon) {
+            userLat = lat; userLon = lon;
+            if (!map) return;
+            if (userMarker) map.removeLayer(userMarker);
+            if (userCircle) map.removeLayer(userCircle);
+            const icon = L.divIcon({ className: 'user-icon', html: '<div style="width:20px;height:20px;background:#f5a623;border:3px solid #fff;border-radius:50%;box-shadow:0 0 15px #f5a623;"></div>', iconSize: [20,20], iconAnchor: [10,10] });
+            userMarker = L.marker([lat, lon], { icon }).addTo(map);
+            userCircle = L.circle([lat, lon], { radius: 50000, color: '#00cc66', fillColor: '#00cc66', fillOpacity: 0.1, weight: 2 }).addTo(map);
+            document.getElementById('gps-status').innerHTML = '<i class="fas fa-location-crosshairs"></i> GPS Active';
+            document.getElementById('gps-status').style.color = '#00cc66';
+        }
+
+        function updateSafetyStatus(status) {
+            const el = document.getElementById('alert-status');
+            el.classList.remove('safe', 'caution', 'danger');
+            if (status === 'danger') { el.classList.add('danger'); el.innerHTML = '<i class="fas fa-exclamation-triangle"></i> DANGER'; if (userCircle) userCircle.setStyle({ color: '#ff3b3b', fillColor: '#ff3b3b' }); }
+            else if (status === 'caution') { el.classList.add('caution'); el.innerHTML = '<i class="fas fa-exclamation-circle"></i> CAUTION'; if (userCircle) userCircle.setStyle({ color: '#ffcc00', fillColor: '#ffcc00' }); }
+            else { el.classList.add('safe'); el.innerHTML = '<i class="fas fa-shield"></i> SAFE'; if (userCircle) userCircle.setStyle({ color: '#00cc66', fillColor: '#00cc66' }); }
+        }
+
+        function initGPS() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(pos => { updateUserPosition(pos.coords.latitude, pos.coords.longitude); if (map) map.setView([pos.coords.latitude, pos.coords.longitude], 9); fetchWeatherData(); fetchWarnings(); }, () => { document.getElementById('gps-status').innerHTML = '<i class="fas fa-location-crosshairs"></i> GPS Off'; }, { enableHighAccuracy: true });
+                navigator.geolocation.watchPosition(pos => updateUserPosition(pos.coords.latitude, pos.coords.longitude), null, { enableHighAccuracy: true });
+            }
+        }
+
+        async function fetchWeatherData() {
+            try {
+                const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${userLat}&longitude=${userLon}&current=temperature_2m,relative_humidity_2m,dew_point_2m,surface_pressure,wind_speed_10m,wind_direction_10m&hourly=cape,lifted_index,convective_inhibition&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto`);
+                const data = await res.json();
+                updateWeatherDisplay(data);
+            } catch (e) { console.error('Weather fetch error:', e); }
+        }
+
+        function updateWeatherDisplay(data) {
+            const c = data.current, h = data.hourly, hi = new Date().getHours();
+            const temp = Math.round(c.temperature_2m), dew = Math.round(c.dew_point_2m), ws = Math.round(c.wind_speed_10m), wd = Math.round(c.wind_direction_10m);
+            document.getElementById('temp-value').textContent = temp;
+            document.getElementById('home-temp').textContent = temp + '°F';
+            document.getElementById('dewpoint-value').textContent = dew;
+            document.getElementById('home-dewpoint').textContent = dew + '°F';
+            document.getElementById('wind-speed').textContent = ws;
+            document.getElementById('wind-dir').textContent = wd;
+            document.getElementById('home-wind').textContent = ws + ' mph ' + getWindDir(wd);
+            document.getElementById('pressure-value').textContent = Math.round(c.surface_pressure);
+            document.getElementById('humidity-value').textContent = Math.round(c.relative_humidity_2m);
+            const cape = h.cape ? h.cape[hi] || 0 : 0;
+            document.getElementById('cape-value').textContent = Math.round(cape);
+            document.getElementById('home-cape').textContent = Math.round(cape) + ' J/kg';
+            document.getElementById('cape-bar').style.width = Math.min(cape / 50, 100) + '%';
+            const li = h.lifted_index ? h.lifted_index[hi] || 0 : 0;
+            document.getElementById('li-value').textContent = li.toFixed(1);
+            const cin = h.convective_inhibition ? Math.abs(h.convective_inhibition[hi]) || 0 : 0;
+            document.getElementById('cin-value').textContent = Math.round(cin);
+            const lcl = (temp - dew) * 227;
+            document.getElementById('lcl-value').textContent = Math.round(lcl);
+            const lapse = 6.5 + (temp - dew) / 20;
+            document.getElementById('lapse-value').textContent = lapse.toFixed(1);
+            document.getElementById('data-time').textContent = new Date().toLocaleTimeString();
+            updateThreat(cape, li, cin, temp, dew);
+        }
+
+        function getWindDir(d) { const dirs = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW']; return dirs[Math.round(d/22.5)%16]; }
+
+        function updateThreat(cape, li, cin, temp, dew) {
+            let score = 0, threats = [];
+            if (cape > 3000) { score += 35; threats.push('Extreme instability (CAPE > 3000)'); }
+            else if (cape > 2000) { score += 25; threats.push('Strong instability (CAPE > 2000)'); }
+            else if (cape > 1000) { score += 15; threats.push('Moderate instability'); }
+            if (li < -6) { score += 25; threats.push('Very unstable (LI < -6)'); }
+            else if (li < -4) { score += 15; threats.push('Unstable atmosphere'); }
+            if (cin > 100) { score -= 10; threats.push('Strong cap present'); }
+            if ((temp - dew) < 10) { score += 10; threats.push('Rich low-level moisture'); }
+            score = Math.max(0, Math.min(100, score));
+            const tl = document.getElementById('threat-level'), tb = document.getElementById('threat-bar'), td = document.getElementById('threat-details');
+            tb.style.width = score + '%';
+            if (score >= 75) { tl.textContent = 'EXTREME'; tl.className = 'threat-level extreme'; }
+            else if (score >= 50) { tl.textContent = 'HIGH'; tl.className = 'threat-level high'; }
+            else if (score >= 25) { tl.textContent = 'MODERATE'; tl.className = 'threat-level moderate'; }
+            else { tl.textContent = 'LOW'; tl.className = 'threat-level low'; }
+            td.innerHTML = threats.length ? '<ul>' + threats.map(t => `<li>${t}</li>`).join('') + '</ul>' : '<p>No significant severe weather indicators.</p>';
+        }
+
+        async function fetchWarnings() {
+            try {
+                warningLayers.forEach(l => map && map.removeLayer(l)); warningLayers = [];
+                const res = await fetch(`https://api.weather.gov/alerts/active?point=${userLat},${userLon}&status=actual`);
+                const data = await res.json();
+                const wl = document.getElementById('warnings-list');
+                let status = 'safe';
+                if (data.features && data.features.length > 0) {
+                    wl.innerHTML = '';
+                    data.features.forEach(a => {
+                        const p = a.properties, e = p.event.toLowerCase();
+                        let color = '#00ccff', cls = '';
+                        if (e.includes('tornado')) { color = '#ff00ff'; cls = 'tornado'; status = 'danger'; }
+                        else if (e.includes('severe thunderstorm')) { color = '#ff6600'; cls = 'severe'; if (status !== 'danger') status = 'caution'; }
+                        else if (e.includes('flash flood')) { color = '#00ff00'; cls = 'flood'; if (status !== 'danger') status = 'caution'; }
+                        if (a.geometry && map) { const layer = L.geoJSON(a.geometry, { style: { color, fillColor: color, fillOpacity: 0.3, weight: 2 } }).addTo(map); layer.bindPopup(`<strong>${p.event}</strong><br>${p.headline || ''}`); warningLayers.push(layer); }
+                        wl.innerHTML += `<div class="warning-item ${cls}"><h4>${p.event}</h4><p>${p.areaDesc || ''}</p><p style="font-size:0.75rem;color:var(--text-muted);">Expires: ${new Date(p.expires).toLocaleString()}</p></div>`;
+                    });
+                } else { wl.innerHTML = '<p class="no-warnings">No active warnings in your area</p>'; }
+                updateSafetyStatus(status);
+            } catch (e) { console.error('Warnings fetch error:', e); }
+        }
+
+        function initGallery() {
+            document.querySelectorAll('.gallery-tab').forEach(tab => tab.addEventListener('click', () => {
+                document.querySelectorAll('.gallery-tab').forEach(t => t.classList.remove('active')); tab.classList.add('active');
+                document.getElementById('videos-gallery').classList.toggle('hidden', tab.dataset.tab !== 'videos');
+                document.getElementById('photos-gallery').classList.toggle('hidden', tab.dataset.tab !== 'photos');
+            }));
+            document.querySelector('.modal-close').addEventListener('click', closeModal);
+            document.getElementById('media-modal').addEventListener('click', e => { if (e.target === document.getElementById('media-modal')) closeModal(); });
+            document.getElementById('media-form').addEventListener('submit', handleMediaSubmit);
+            renderGallery();
+        }
+
+        let currentMediaType = 'video';
+        function openModal(type) { currentMediaType = type; document.getElementById('modal-title').textContent = type === 'video' ? 'Add YouTube Video' : 'Add Photo'; document.getElementById('media-url').placeholder = type === 'video' ? 'Paste YouTube URL' : 'Paste image URL'; document.getElementById('media-modal').classList.add('active'); }
+        function closeModal() { document.getElementById('media-modal').classList.remove('active'); document.getElementById('media-form').reset(); }
+        function handleMediaSubmit(e) {
+            e.preventDefault();
+            const item = { url: document.getElementById('media-url').value, title: document.getElementById('media-title').value, date: document.getElementById('media-date').value, location: document.getElementById('media-location').value, id: Date.now() };
+            if (currentMediaType === 'video') { videos.push(item); localStorage.setItem('skystorm_videos', JSON.stringify(videos)); }
+            else { photos.push(item); localStorage.setItem('skystorm_photos', JSON.stringify(photos)); }
+            renderGallery(); closeModal();
+        }
+        function renderGallery() {
+            const vg = document.getElementById('video-grid'), pg = document.getElementById('photo-grid');
+            vg.innerHTML = videos.map(v => { const id = extractYTId(v.url); return `<div class="video-card"><div class="video-embed"><iframe src="https://www.youtube.com/embed/${id}" frameborder="0" allowfullscreen></iframe></div><div class="media-info"><h4>${v.title}</h4><p>${v.location || ''} ${v.date ? '• ' + v.date : ''}</p></div></div>`; }).join('') + '<div class="add-media-card" onclick="openModal(\'video\')"><i class="fas fa-plus"></i><span>Add YouTube Video</span></div>';
+            pg.innerHTML = photos.map(p => `<div class="photo-card"><img src="${p.url}" alt="${p.title}" onerror="this.src='https://via.placeholder.com/400x200?text=Image+Not+Found'"><div class="media-info"><h4>${p.title}</h4><p>${p.location || ''} ${p.date ? '• ' + p.date : ''}</p></div></div>`).join('') + '<div class="add-media-card" onclick="openModal(\'photo\')"><i class="fas fa-plus"></i><span>Add Photo URL</span></div>';
+        }
+        function extractYTId(url) { const m = url.match(/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/); return m && m[2].length === 11 ? m[2] : null; }
+
+        function initUpload() {
+            const uz = document.getElementById('upload-zone'), fi = document.getElementById('file-input');
+            uz.addEventListener('click', () => fi.click());
+            uz.addEventListener('dragover', e => { e.preventDefault(); uz.classList.add('dragover'); });
+            uz.addEventListener('dragleave', () => uz.classList.remove('dragover'));
+            uz.addEventListener('drop', e => { e.preventDefault(); uz.classList.remove('dragover'); if (e.dataTransfer.files[0]) processFile(e.dataTransfer.files[0]); });
+            fi.addEventListener('change', e => { if (e.target.files[0]) processFile(e.target.files[0]); });
+            document.getElementById('clear-upload').addEventListener('click', clearUpload);
+            document.getElementById('download-data').addEventListener('click', downloadData);
+            document.getElementById('visualize-data').addEventListener('click', visualizeData);
+        }
+        function processFile(file) {
+            const ext = file.name.split('.').pop().toLowerCase();
+            if (!['csv', 'json'].includes(ext)) { alert('Please upload CSV or JSON'); return; }
+            const reader = new FileReader();
+            reader.onload = e => {
+                try {
+                    if (ext === 'json') uploadedData = JSON.parse(e.target.result);
+                    else { const lines = e.target.result.trim().split('\n'), headers = lines[0].split(',').map(h => h.trim()); uploadedData = lines.slice(1).map(l => { const vals = l.split(',').map(v => v.trim()), row = {}; headers.forEach((h, i) => row[h] = vals[i]); return row; }); }
+                    displayPreview(file.name, uploadedData);
+                } catch (err) { alert('Error parsing file: ' + err.message); }
+            };
+            reader.readAsText(file);
+        }
+        function displayPreview(name, data) {
+            document.getElementById('upload-zone').style.display = 'none';
+            document.getElementById('upload-preview').classList.remove('hidden');
+            document.getElementById('file-name').textContent = name;
+            const pc = document.getElementById('preview-content');
+            if (Array.isArray(data) && data.length > 0) {
+                const headers = Object.keys(data[0]), rows = data.slice(0, 10);
+                pc.innerHTML = `<table class="preview-table"><thead><tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.map(r => `<tr>${headers.map(h => `<td>${r[h] || ''}</td>`).join('')}</tr>`).join('')}</tbody></table><p style="margin-top:1rem;color:var(--text-muted);font-size:0.85rem;">Showing ${rows.length} of ${data.length} rows</p>`;
+            } else { pc.innerHTML = '<pre>' + JSON.stringify(data, null, 2).slice(0, 1000) + '</pre>'; }
+        }
+        function clearUpload() { uploadedData = null; document.getElementById('upload-zone').style.display = 'flex'; document.getElementById('upload-preview').classList.add('hidden'); document.getElementById('data-visualization').classList.add('hidden'); document.getElementById('file-input').value = ''; }
+        function downloadData() { if (!uploadedData) return; const blob = new Blob([JSON.stringify(uploadedData, null, 2)], { type: 'application/json' }), a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'processed_data.json'; a.click(); }
+        function visualizeData() {
+            if (!uploadedData || !Array.isArray(uploadedData)) return;
+            document.getElementById('data-visualization').classList.remove('hidden');
+            const headers = Object.keys(uploadedData[0]), numHeaders = headers.filter(h => !isNaN(parseFloat(uploadedData[0][h])));
+            if (numHeaders.length === 0) { document.getElementById('data-visualization').innerHTML = '<p style="color:var(--text-muted);">No numeric data found</p>'; return; }
+            const ctx = document.getElementById('data-chart').getContext('2d');
+            if (dataChart) dataChart.destroy();
+            dataChart = new Chart(ctx, {
+                type: 'line',
+                data: { labels: uploadedData.map((_, i) => `Point ${i + 1}`), datasets: numHeaders.slice(0, 3).map((h, i) => ({ label: h, data: uploadedData.map(r => parseFloat(r[h]) || 0), borderColor: ['#f5a623', '#ff6b35', '#00cc66'][i], backgroundColor: ['rgba(245,166,35,0.1)', 'rgba(255,107,53,0.1)', 'rgba(0,204,102,0.1)'][i], tension: 0.4 })) },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#fff' } } }, scales: { x: { ticks: { color: '#a0a0b0' }, grid: { color: '#2a2a3a' } }, y: { ticks: { color: '#a0a0b0' }, grid: { color: '#2a2a3a' } } } }
+            });
+        }
+    </script>
+</body>
+</html>
