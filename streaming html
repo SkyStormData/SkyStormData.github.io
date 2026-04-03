@@ -1,0 +1,622 @@
+html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SkyStorm Streaming Dashboard - Twitch Overlay</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background: transparent;
+            color: #ffffff;
+            width: 1920px;
+            height: 1080px;
+            overflow: hidden;
+            position: relative;
+        }
+        .panel {
+            background: rgba(26, 26, 37, 0.85);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(245, 166, 35, 0.3);
+            border-radius: 12px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            position: absolute;
+        }
+        .panel-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid rgba(245, 166, 35, 0.2);
+        }
+        .panel-header i {
+            font-size: 1.1rem;
+            color: #f5a623;
+        }
+        .panel-header h3 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            color: #f5a623;
+        }
+        .panel-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .radar-panel {
+            bottom: 20px;
+            left: 20px;
+            width: 480px;
+            height: 380px;
+        }
+        #stream-map {
+            width: 100%;
+            height: 100%;
+            border-radius: 8px;
+            border: 1px solid rgba(245, 166, 35, 0.3);
+        }
+        
+        .location-panel {
+            top: 20px;
+            left: 20px;
+            width: 320px;
+        }
+        
+        .warnings-panel {
+            bottom: 20px;
+            left: 520px;
+            width: 360px;
+            max-height: 380px;
+        }
+        
+        .conditions-panel {
+            top: 20px;
+            right: 20px;
+            width: 320px;
+        }
+        .storm-panel {
+            top: 280px;
+            right: 20px;
+            width: 320px;
+        }
+        .atmo-panel {
+            bottom: 20px;
+            right: 20px;
+            width: 320px;
+        }
+        
+        .location-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #f5a623;
+            margin-bottom: 8px;
+        }
+        .location-detail {
+            font-size: 0.9rem;
+            color: #a0a0b0;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .location-detail i {
+            color: #f5a623;
+            width: 16px;
+            font-size: 0.85rem;
+        }
+        
+        .weather-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        .weather-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px;
+            background: rgba(18, 18, 26, 0.6);
+            border-radius: 6px;
+        }
+        .weather-item i {
+            font-size: 1.2rem;
+            color: #f5a623;
+            margin-bottom: 4px;
+        }
+        .weather-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #ffffff;
+        }
+        .weather-label {
+            font-size: 0.7rem;
+            color: #606070;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .index-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px;
+            background: rgba(18, 18, 26, 0.6);
+            border-radius: 6px;
+            margin-bottom: 6px;
+        }
+        .index-label {
+            font-size: 0.85rem;
+            color: #a0a0b0;
+            font-weight: 600;
+        }
+        .index-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #f5a623;
+        }
+        .threat-display {
+            text-align: center;
+            padding: 10px;
+            background: rgba(18, 18, 26, 0.6);
+            border-radius: 6px;
+            margin-top: 6px;
+        }
+        .threat-text {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 900;
+            letter-spacing: 2px;
+        }
+        .threat-text.low { color: #00cc66; }
+        .threat-text.moderate { color: #ffcc00; }
+        .threat-text.high { color: #ff6600; }
+        .threat-text.extreme { color: #ff3b3b; animation: pulse 1s infinite; }
+        
+        .warnings-panel .panel-content {
+            overflow-y: auto;
+            max-height: 120px;
+        }
+        .warning-item {
+            padding: 8px;
+            background: rgba(18, 18, 26, 0.6);
+            border-radius: 6px;
+            margin-bottom: 6px;
+            border-left: 3px solid;
+        }
+        .warning-item.tornado { border-color: #ff00ff; }
+        .warning-item.severe { border-color: #ff6600; }
+        .warning-item.flood { border-color: #00ff00; }
+        .warning-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 700;
+            margin-bottom: 3px;
+            color: #ffffff;
+        }
+        .warning-desc {
+            font-size: 0.75rem;
+            color: #a0a0b0;
+        }
+        .no-warnings {
+            text-align: center;
+            padding: 20px;
+            color: #606070;
+            font-size: 0.9rem;
+        }
+        
+        .atmo-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        .atmo-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px;
+            background: rgba(18, 18, 26, 0.6);
+            border-radius: 6px;
+        }
+        .atmo-item i {
+            font-size: 1rem;
+            color: #f5a623;
+            margin-bottom: 4px;
+        }
+        .atmo-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #ffffff;
+        }
+        .atmo-label {
+            font-size: 0.65rem;
+            color: #606070;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            text-align: center;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+        
+        .update-time {
+            position: absolute;
+            bottom: 410px;
+            left: 20px;
+            padding: 6px 12px;
+            background: rgba(26, 26, 37, 0.85);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(245, 166, 35, 0.3);
+            border-radius: 15px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.7rem;
+            color: #a0a0b0;
+        }
+    </style>
+</head>
+<body>
+    <div class="panel radar-panel">
+        <div class="panel-header">
+            <i class="fas fa-satellite-dish"></i>
+            <h3>LIVE RADAR</h3>
+        </div>
+        <div class="panel-content">
+            <div id="stream-map"></div>
+        </div>
+    </div>
+    
+    <div class="panel location-panel">
+        <div class="panel-header">
+            <i class="fas fa-location-crosshairs"></i>
+            <h3>LOCATION</h3>
+        </div>
+        <div class="panel-content">
+            <div class="location-value" id="location-city">--</div>
+            <div class="location-detail">
+                <i class="fas fa-map-pin"></i>
+                <span id="location-coords">Acquiring GPS...</span>
+            </div>
+            <div class="location-detail">
+                <i class="fas fa-compass"></i>
+                <span id="location-elevation">-- ft</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="panel conditions-panel">
+        <div class="panel-header">
+            <i class="fas fa-cloud-sun"></i>
+            <h3>CONDITIONS</h3>
+        </div>
+        <div class="panel-content">
+            <div class="weather-grid">
+                <div class="weather-item">
+                    <i class="fas fa-temperature-high"></i>
+                    <span class="weather-value" id="cond-temp">--</span>
+                    <span class="weather-label">Temp</span>
+                </div>
+                <div class="weather-item">
+                    <i class="fas fa-wind"></i>
+                    <span class="weather-value" id="cond-wind">--</span>
+                    <span class="weather-label">Wind</span>
+                </div>
+                <div class="weather-item">
+                    <i class="fas fa-tint"></i>
+                    <span class="weather-value" id="cond-humidity">--</span>
+                    <span class="weather-label">Humidity</span>
+                </div>
+                <div class="weather-item">
+                    <i class="fas fa-gauge-high"></i>
+                    <span class="weather-value" id="cond-pressure">--</span>
+                    <span class="weather-label">Pressure</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="panel storm-panel">
+        <div class="panel-header">
+            <i class="fas fa-bolt"></i>
+            <h3>STORM INDEX</h3>
+        </div>
+        <div class="panel-content">
+            <div class="index-item">
+                <span class="index-label">CAPE</span>
+                <span class="index-value" id="idx-cape">-- J/kg</span>
+            </div>
+            <div class="index-item">
+                <span class="index-label">Lifted Index</span>
+                <span class="index-value" id="idx-li">-- °C</span>
+            </div>
+            <div class="threat-display">
+                <div class="threat-text low" id="idx-threat">LOW</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="panel warnings-panel">
+        <div class="panel-header">
+            <i class="fas fa-exclamation-triangle"></i>
+            <h3>ACTIVE ALERTS</h3>
+        </div>
+        <div class="panel-content" id="warnings-container">
+            <div class="no-warnings">No active warnings</div>
+        </div>
+    </div>
+    
+    <div class="panel atmo-panel">
+        <div class="panel-header">
+            <i class="fas fa-layer-group"></i>
+            <h3>ATMOSPHERE</h3>
+        </div>
+        <div class="panel-content">
+            <div class="atmo-grid">
+                <div class="atmo-item">
+                    <i class="fas fa-temperature-half"></i>
+                    <span class="atmo-value" id="atmo-dewpoint">--°F</span>
+                    <span class="atmo-label">Dew Point</span>
+                </div>
+                <div class="atmo-item">
+                    <i class="fas fa-arrow-up"></i>
+                    <span class="atmo-value" id="atmo-lcl">-- ft</span>
+                    <span class="atmo-label">LCL</span>
+                </div>
+                <div class="atmo-item">
+                    <i class="fas fa-chart-line"></i>
+                    <span class="atmo-value" id="atmo-lapse">--°C/km</span>
+                    <span class="atmo-label">Lapse Rate</span>
+                </div>
+                <div class="atmo-item">
+                    <i class="fas fa-cloud"></i>
+                    <span class="atmo-value" id="atmo-cin">-- J/kg</span>
+                    <span class="atmo-label">CIN</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="update-time">
+        Last Update: <span id="update-time">--</span>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        let map, userMarker, userCircle, warningLayers = [];
+        let userLat = 39.1031, userLon = -84.5120;
+        let radarLayer = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            try {
+                initMap();
+                initGPS();
+                fetchWeatherData();
+                fetchWarnings();
+                setInterval(() => { 
+                    fetchWeatherData(); 
+                    fetchWarnings(); 
+                }, 120000);
+            } catch (e) {
+                console.error('Init error:', e);
+            }
+        });
+
+        function initMap() {
+            try {
+                map = L.map('stream-map', { 
+                    center: [userLat, userLon], 
+                    zoom: 9, 
+                    zoomControl: false,
+                    attributionControl: false
+                });
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { 
+                    maxZoom: 19 
+                }).addTo(map);
+                
+                radarLayer = L.tileLayer.wms('https://mesonet.agron.iastate.edu/cgi-bin/wms/nexrad/n0r.cgi', { 
+                    layers: 'nexrad-n0r-900913', 
+                    format: 'image/png', 
+                    transparent: true, 
+                    opacity: 0.7 
+                }).addTo(map);
+                
+                updateUserPosition(userLat, userLon);
+            } catch (e) {
+                console.error('Map init error:', e);
+            }
+        }
+
+        function updateUserPosition(lat, lon) {
+            try {
+                userLat = lat; userLon = lon;
+                if (!map) return;
+                
+                if (userMarker) map.removeLayer(userMarker);
+                if (userCircle) map.removeLayer(userCircle);
+                
+                const icon = L.divIcon({ 
+                    className: 'user-icon', 
+                    html: '<div style="width:24px;height:24px;background:#f5a623;border:3px solid #fff;border-radius:50%;box-shadow:0 0 20px #f5a623;"></div>', 
+                    iconSize: [24, 24], 
+                    iconAnchor: [12, 12] 
+                });
+                
+                userMarker = L.marker([lat, lon], { icon }).addTo(map);
+                userCircle = L.circle([lat, lon], { 
+                    radius: 50000, 
+                    color: '#00cc66', 
+                    fillColor: '#00cc66', 
+                    fillOpacity: 0.15, 
+                    weight: 3 
+                }).addTo(map);
+                
+                map.setView([lat, lon], 9);
+                updateLocationDisplay(lat, lon);
+            } catch (e) {
+                console.error('Update position error:', e);
+            }
+        }
+
+        function updateLocationDisplay(lat, lon) {
+            try {
+                document.getElementById('location-coords').textContent = 
+                    `${lat.toFixed(4)}°N, ${Math.abs(lon).toFixed(4)}°W`;
+                
+                fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
+                    .then(r => r.json())
+                    .then(data => {
+                        const city = data.address.city || data.address.town || data.address.village || 'Unknown';
+                        const state = data.address.state || '';
+                        document.getElementById('location-city').textContent = `${city}, ${state}`;
+                    })
+                    .catch(() => {
+                        document.getElementById('location-city').textContent = 'Location Acquired';
+                    });
+                
+                document.getElementById('location-elevation').textContent = '~ 500 ft';
+            } catch (e) {
+                console.error('Location display error:', e);
+            }
+        }
+
+        function initGPS() {
+            try {
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        pos => { 
+                            updateUserPosition(pos.coords.latitude, pos.coords.longitude);
+                            fetchWeatherData(); 
+                            fetchWarnings(); 
+                        }, 
+                        () => { 
+                            console.log('GPS denied, using default location');
+                            fetchWeatherData();
+                            fetchWarnings();
+                        }, 
+                        { enableHighAccuracy: true }
+                    );
+                    navigator.geolocation.watchPosition(
+                        pos => updateUserPosition(pos.coords.latitude, pos.coords.longitude), 
+                        null, 
+                        { enableHighAccuracy: true }
+                    );
+                }
+            } catch (e) {
+                console.error('GPS init error:', e);
+            }
+        }
+
+        async function fetchWeatherData() {
+            try {
+                const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${userLat}&longitude=${userLon}&current=temperature_2m,relative_humidity_2m,dew_point_2m,surface_pressure,wind_speed_10m,wind_direction_10m&hourly=cape,lifted_index,convective_inhibition&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto`);
+                const data = await res.json();
+                updateWeatherDisplay(data);
+                document.getElementById('update-time').textContent = new Date().toLocaleTimeString();
+            } catch (e) { 
+                console.error('Weather fetch error:', e); 
+            }
+        }
+
+        function updateWeatherDisplay(data) {
+            try {
+                const c = data.current, h = data.hourly, hi = new Date().getHours();
+                const temp = Math.round(c.temperature_2m);
+                const dew = Math.round(c.dew_point_2m);
+                const ws = Math.round(c.wind_speed_10m);
+                const wd = Math.round(c.wind_direction_10m);
+                
+                document.getElementById('cond-temp').textContent = temp + '°F';
+                document.getElementById('cond-wind').textContent = ws + ' mph';
+                document.getElementById('cond-humidity').textContent = Math.round(c.relative_humidity_2m) + '%';
+                document.getElementById('cond-pressure').textContent = Math.round(c.surface_pressure) + ' mb';
+                
+                document.getElementById('atmo-dewpoint').textContent = dew + '°F';
+                const lcl = (temp - dew) * 227;
+                document.getElementById('atmo-lcl').textContent = Math.round(lcl) + ' ft';
+                const lapse = 6.5 + (temp - dew) / 20;
+                document.getElementById('atmo-lapse').textContent = lapse.toFixed(1) + '°C/km';
+                const cin = h.convective_inhibition ? Math.abs(h.convective_inhibition[hi]) || 0 : 0;
+                document.getElementById('atmo-cin').textContent = Math.round(cin) + ' J/kg';
+                
+                const cape = h.cape ? h.cape[hi] || 0 : 0;
+                const li = h.lifted_index ? h.lifted_index[hi] || 0 : 0;
+                document.getElementById('idx-cape').textContent = Math.round(cape) + ' J/kg';
+                document.getElementById('idx-li').textContent = li.toFixed(1) + '°C';
+                
+                const threatEl = document.getElementById('idx-threat');
+                let threat = 'LOW', threatClass = 'low';
+                if (cape > 2500 && li < -6) { threat = 'EXTREME'; threatClass = 'extreme'; }
+                else if (cape > 1500 && li < -4) { threat = 'HIGH'; threatClass = 'high'; }
+                else if (cape > 1000 && li < -2) { threat = 'MODERATE'; threatClass = 'moderate'; }
+                threatEl.textContent = threat;
+                threatEl.className = 'threat-text ' + threatClass;
+            } catch (e) {
+                console.error('Weather display error:', e);
+            }
+        }
+
+        async function fetchWarnings() {
+            try {
+                warningLayers.forEach(l => map && map.removeLayer(l)); 
+                warningLayers = [];
+                
+                const res = await fetch(`https://api.weather.gov/alerts/active?point=${userLat},${userLon}&status=actual`);
+                const data = await res.json();
+                const container = document.getElementById('warnings-container');
+                
+                if (data.features && data.features.length > 0) {
+                    container.innerHTML = '';
+                    data.features.forEach(a => {
+                        const p = a.properties, e = p.event.toLowerCase();
+                        let color = '#00ccff', cls = '';
+                        
+                        if (e.includes('tornado')) { color = '#ff00ff'; cls = 'tornado'; }
+                        else if (e.includes('severe thunderstorm')) { color = '#ff6600'; cls = 'severe'; }
+                        else if (e.includes('flash flood')) { color = '#00ff00'; cls = 'flood'; }
+                        
+                        if (a.geometry && map) { 
+                            const layer = L.geoJSON(a.geometry, { 
+                                style: { color, fillColor: color, fillOpacity: 0.3, weight: 2 } 
+                            }).addTo(map); 
+                            warningLayers.push(layer); 
+                        }
+                        
+                        container.innerHTML += `
+                            <div class="warning-item ${cls}">
+                                <div class="warning-title">${p.event}</div>
+                                <div class="warning-desc">${p.areaDesc || ''}</div>
+                            </div>
+                        `;
+                    });
+                } else { 
+                    container.innerHTML = '<div class="no-warnings">No active warnings</div>'; 
+                }
+            } catch (e) { 
+                console.error('Warnings fetch error:', e); 
+            }
+        }
+
+        function getWindDir(d) { 
+            const dirs = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW']; 
+            return dirs[Math.round(d/22.5)%16]; 
+        }
+    </script>
+</body>
+</html>
