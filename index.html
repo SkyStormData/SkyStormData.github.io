@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkyStorm Data — Storm Operations Network</title>
+
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0a0a0f">
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+<style>
+
+:root{
+--bg-primary:#0a0a0f;
+--bg-secondary:#12121a;
+--bg-card:#1a1a25;
+--accent-primary:#f5a623;
+--text-primary:#fff;
+--text-secondary:#a0a0b0;
+--safe:#00cc66;
+--danger:#ff3b3b;
+--border-color:#2a2a3a;
+--radius:12px;
+}
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+}
+
+body{
+font-family:Arial,sans-serif;
+background:var(--bg-primary);
+color:var(--text-primary);
+overflow-x:hidden;
+}
+
+.main-nav{
+position:fixed;
+top:0;
+left:0;
+right:0;
+z-index:1000;
+display:flex;
+justify-content:space-between;
+align-items:center;
+padding:1rem 2rem;
+background:rgba(10,10,15,.95);
+border-bottom:1px solid var(--border-color);
+backdrop-filter:blur(15px);
+}
+
+.brand{
+font-size:1.4rem;
+font-weight:700;
+color:var(--accent-primary);
+}
+
+.nav-links{
+display:flex;
+gap:1rem;
+}
+
+.nav-link{
+cursor:pointer;
+padding:.7rem 1rem;
+border-radius:8px;
+transition:.3s;
+}
+
+.nav-link:hover{
+background:var(--bg-card);
+}
+
+.nav-link.active{
+background:rgba(245,166,35,.15);
+color:var(--accent-primary);
+}
+
+.section{
+display:none;
+padding:100px 1rem 2rem;
+min-height:100vh;
+}
+
+.section.active{
+display:block;
+}
+
+.hero{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:2rem;
+align-items:center;
+min-height:80vh;
+}
+
+.hero-title{
+font-size:4rem;
+font-weight:900;
+line-height:1.1;
+}
+
+.hero-title span{
+color:var(--accent-primary);
+}
+
+.hero-sub{
+font-size:1.3rem;
+color:var(--text-secondary);
+margin-top:1rem;
+}
+
+.hero-boxes{
+display:flex;
+gap:1rem;
+margin-top:2rem;
+flex-wrap:wrap;
+}
+
+.hero-box{
+background:var(--bg-card);
+padding:1rem;
+border-radius:var(--radius);
+border:1px solid var(--border-color);
+min-width:120px;
+text-align:center;
+}
+
+.hero-box h2{
+color:var(--accent-primary);
+}
+
+.radar-box{
+height:350px;
+border-radius:50%;
+border:2px solid var(--accent-primary);
+position:relative;
+overflow:hidden;
+}
+
+.radar-sweep{
+position:absolute;
+width:50%;
+height:50%;
+background:linear-gradient(90deg,transparent,rgba(245,166,35,.35));
+transform-origin:0 0;
+top:50%;
+left:50%;
+animation:spin 4s linear infinite;
+}
+
+@keyframes spin{
+from{transform:rotate(0deg);}
+to{transform:rotate(360deg);}
+}
+
+#map{
+height:75vh;
+border-radius:var(--radius);
+border:1px solid var(--border-color);
+}
+
+.stream-layout{
+display:grid;
+grid-template-columns:1fr 320px;
+gap:1rem;
+height:80vh;
+}
+
+.stream-main{
+display:flex;
+flex-direction:column;
+gap:1rem;
+}
+
+.stream-video{
+position:relative;
+flex:1;
+background:black;
+border-radius:var(--radius);
+overflow:hidden;
+border:1px solid var(--border-color);
+}
+
+#live-video{
+width:100%;
+height:100%;
+object-fit:cover;
+background:black;
+}
+
+.stream-overlay{
+position:absolute;
+top:15px;
+left:15px;
+background:rgba(0,0,0,.6);
+padding:.5rem 1rem;
+border-radius:20px;
+font-size:.9rem;
+}
+
+.warning-ticker{
+background:#300000;
+border:1px solid var(--danger);
+overflow:hidden;
+white-space:nowrap;
+border-radius:8px;
+}
+
+.ticker-track{
+display:inline-block;
+padding:.75rem 0;
+font-weight:700;
+animation:tickerMove 20s linear infinite;
+}
+
+@keyframes tickerMove{
+from{transform:translateX(100%);}
+to{transform:translateX(-100%);}
+}
+
+.stream-controls{
+display:flex;
+gap:1rem;
+}
+
+.go-live-btn{
+flex:1;
+padding:1rem;
+background:var(--danger);
+border:none;
+color:white;
+font-weight:700;
+border-radius:8px;
+cursor:pointer;
+}
+
+.end-btn{
+flex:1;
+padding:1rem;
+background:var(--bg-card);
+border:1px solid var(--border-color);
+color:white;
+font-weight:700;
+border-radius:8px;
+cursor:pointer;
+}
+
+.chat-panel{
+display:flex;
+flex-direction:column;
+background:var(--bg-card);
+border:1px solid var(--border-color);
+border-radius:var(--radius);
+overflow:hidden;
+}
+
+.chat-header{
+padding:1rem;
+border-bottom:1px solid var(--border-color);
+font-weight:700;
+}
+
+.chat-messages{
+flex:1;
+overflow-y:auto;
+padding:1rem;
+}
+
+.chat-message{
+background:var(--bg-secondary);
+padding:.75rem;
+margin-bottom:1rem;
+border-radius:8px;
+}
+
+.chat-user{
+color:var(--accent-primary);
+font-weight:700;
+}
+
+.chat-input-row{
+display:flex;
+gap:.5rem;
+padding:1rem;
+border-top:1px solid var(--border-color);
+}
+
+.chat-input-row input{
+flex:1;
+padding:.75rem;
+background:var(--bg-secondary);
+border:1px solid var(--border-color);
+border-radius:8px;
+color:white;
+}
+
+.chat-input-row button{
+padding:.75rem 1rem;
+background:var(--accent-primary);
+border:none;
+border-radius:8px;
+font-weight:700;
+cursor:pointer;
+}
+
+.live-status{
+padding:.5rem 1rem;
+border-radius:20px;
+background:#330000;
+border:1px solid var(--danger);
+color:var(--danger);
+font-weight:700;
+}
+
+@media(max-width:900px){
+
+.hero{
+grid-template-columns:1fr;
+}
+
+.stream-layout{
+grid-template-columns:1fr;
+height:auto;
+}
+
+.chat-panel{
+height:400px;
+}
+
+}
+
+</style>
+</head>
+
+<body>
+
+<nav class="main-nav">
+
+<div class="brand">
+SKYSTORM DATA
+</div>
+
+<div class="nav-links">
+
+<div class="nav-link active" onclick="showSection('home',event)">
+<i class="fas fa-home"></i> Home
+</div>
+
+<div class="nav-link" onclick="showSection('radar',event)">
+<i class="fas fa-satellite-dish"></i> Radar
+</div>
+
+<div class="nav-link" onclick="showSection('stream',event)">
+<i class="fas fa-video"></i> Stream
+</div>
+
+</div>
+
+</nav>
+
+<section id="home" class="section active">
+
+<div class="hero">
+
+<div>
+
+<h1 class="hero-title">
+SKYSTORM <span>DATA</span>
+</h1>
+
+<p class="hero-sub">
+Real-Time Storm Tracking & Severe Weather Operations
+</p>
+
+<div class="hero-boxes">
+
+<div class="hero-box">
+<h2>LIVE</h2>
+<p>Radar Feed</p>
+</div>
+
+<div class="hero-box">
+<h2>GPS</h2>
+<p>Storm Aware</p>
+</div>
+
+<div class="hero-box">
+<h2>24/7</h2>
+<p>Monitoring</p>
+</div>
+
+</div>
+
+</div>
+
+<div class="radar-box">
+<div class="radar-sweep"></div>
+</div>
+
+</div>
+
+</section>
+
+<section id="radar" class="section">
+
+<h2 style="margin-bottom:1rem;">
+📡 Live Radar
+</h2>
+
+<div id="map"></div>
+
+</section>
+
+<section id="stream" class="section">
+
+<div class="stream-layout">
+
+<div class="stream-main">
+
+<div style="display:flex;justify-content:space-between;align-items:center;">
+
+<h2>
+🎥 SkyStorm Live
+</h2>
+
+<div class="live-status" id="live-status">
+OFFLINE
+</div>
+
+</div>
+
+<div class="stream-video">
+
+<video id="live-video" autoplay playsinline muted></video>
+
+<div class="stream-overlay">
+⚡ Ohio Valley Storm Operations
+</div>
+
+</div>
+
+<div class="warning-ticker">
+
+<div class="ticker-track">
+
+⚠️ TORNADO WARNING • LAWRENCE COUNTY ⚠️
+SEVERE THUNDERSTORM WARNING • ORANGE COUNTY ⚠️
+FLASH FLOOD WARNING • JACKSON COUNTY ⚠️
+
+</div>
+
+</div>
+
+<div class="stream-controls">
+
+<button class="go-live-btn" onclick="adminLogin()">
+🔴 GO LIVE
+</button>
+
+<button class="end-btn" onclick="stopStream()">
+⏹ END STREAM
+</button>
+
+</div>
+
+</div>
+
+<div class="chat-panel">
+
+<div class="chat-header">
+💬 LIVE CHAT
+</div>
+
+<div class="chat-messages" id="chat-messages">
+
+<div class="chat-message">
+<div class="chat-user">
+SkyStormBot
+</div>
+
+<p>
+⚡ Stream system online.
+</p>
+</div>
+
+</div>
+
+<div class="chat-input-row">
+
+<input type="text" id="chat-input" placeholder="Send message...">
+
+<button onclick="sendMessage()">
+Send
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+</section>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+
+var map;
+var liveStream = null;
+
+function showSection(id,event){
+
+document.querySelectorAll('.section').forEach(function(sec){
+sec.classList.remove('active');
+});
+
+document.getElementById(id).classList.add('active');
+
+document.querySelectorAll('.nav-link').forEach(function(link){
+link.classList.remove('active');
+});
+
+event.currentTarget.classList.add('active');
+
+if(id === 'radar' && !map){
+setTimeout(initMap,100);
+}
+
+}
+
+function initMap(){
+
+map = L.map('map').setView([38.9,-86.5],7);
+
+L.tileLayer(
+'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+).addTo(map);
+
+L.tileLayer.wms(
+'https://mesonet.agron.iastate.edu/cgi-bin/wms/nexrad/n0r.cgi',
+{
+layers:'nexrad-n0r-900913',
+format:'image/png',
+transparent:true,
+opacity:0.6
+}
+).addTo(map);
+
+}
+
+function adminLogin(){
+
+var username = prompt('Admin Username');
+var password = prompt('Admin Password');
+
+if(
+username === 'SkyStormData' &&
+password === 'RonandJane2026'
+){
+startStream();
+}
+else{
+alert('Access Denied');
+}
+
+}
+
+async function startStream(){
+
+try{
+
+liveStream = await navigator.mediaDevices.getUserMedia({
+video:true,
+audio:true
+});
+
+var video = document.getElementById('live-video');
+
+video.srcObject = liveStream;
+
+document.getElementById('live-status').innerHTML = '🔴 LIVE';
+
+addMessage(
+'SkyStormBot',
+'📡 LIVE STREAM STARTED'
+);
+
+}
+catch(err){
+
+alert('Camera/Microphone permission denied');
+
+console.error(err);
+
+}
+
+}
+
+function stopStream(){
+
+if(liveStream){
+
+liveStream.getTracks().forEach(track => track.stop());
+
+document.getElementById('live-video').srcObject = null;
+
+document.getElementById('live-status').innerHTML = 'OFFLINE';
+
+addMessage(
+'SkyStormBot',
+'⚠️ Stream ended'
+);
+
+}
+
+}
+
+function sendMessage(){
+
+var input = document.getElementById('chat-input');
+
+var text = input.value.trim();
+
+if(!text) return;
+
+addMessage('Viewer',text);
+
+input.value = '';
+
+}
+
+function addMessage(user,text){
+
+var container = document.getElementById('chat-messages');
+
+var div = document.createElement('div');
+
+div.className = 'chat-message';
+
+div.innerHTML = `
+<div class="chat-user">${user}</div>
+<p>${text}</p>
+`;
+
+container.appendChild(div);
+
+container.scrollTop = container.scrollHeight;
+
+}
+
+if('serviceWorker' in navigator){
+
+navigator.serviceWorker.register('service-worker.js')
+.then(function(){
+console.log('Service Worker Registered');
+});
+
+}
+
+</script>
+
+</body>
+</html>
+
+Create another file called:
+
+service-worker.js
+
+Paste this:
+
+self.addEventListener('install', function(event) {
+    console.log('SkyStorm Service Worker Installed');
+});
+
+self.addEventListener('fetch', function(event) {
+});
+
+Create another file called:
+
+manifest.json
+
+Paste this:
+
+{
+  "name": "SkyStorm Data",
+  "short_name": "SkyStorm",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#0a0a0f",
+  "theme_color": "#f5a623",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
