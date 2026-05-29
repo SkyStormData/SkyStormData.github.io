@@ -14,6 +14,205 @@
     
     <!-- Application stylesheet -->
     <link rel="stylesheet" href="styles.css">
+    
+    <style>
+        /* Admin Modal Styles */
+        .admin-button {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #ff006e, #8338ec);
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            box-shadow: 0 0 20px rgba(255, 0, 110, 0.5);
+            transition: all 0.3s ease;
+        }
+        
+        .admin-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 30px rgba(255, 0, 110, 0.8);
+        }
+        
+        .admin-modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+        }
+        
+        .admin-modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .admin-modal-content {
+            background: linear-gradient(135deg, #0a0a0f, #1a1a2e);
+            border: 2px solid #00ff88;
+            border-radius: 10px;
+            padding: 40px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 0 30px rgba(0, 255, 136, 0.3);
+        }
+        
+        .admin-modal-header {
+            font-size: 24px;
+            font-weight: bold;
+            color: #00ff88;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .admin-form-group {
+            margin-bottom: 20px;
+        }
+        
+        .admin-form-group label {
+            display: block;
+            color: #00ff88;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        
+        .admin-form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #00ff88;
+            background: rgba(0, 255, 136, 0.1);
+            color: #00ff88;
+            border-radius: 5px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        
+        .admin-form-group input::placeholder {
+            color: rgba(0, 255, 136, 0.5);
+        }
+        
+        .admin-form-group input:focus {
+            outline: none;
+            box-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+        }
+        
+        .admin-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+        }
+        
+        .admin-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .admin-btn-login {
+            background: #00ff88;
+            color: #0a0a0f;
+        }
+        
+        .admin-btn-login:hover {
+            box-shadow: 0 0 15px rgba(0, 255, 136, 0.5);
+        }
+        
+        .admin-btn-close {
+            background: rgba(255, 0, 110, 0.3);
+            color: #ff006e;
+            border: 1px solid #ff006e;
+        }
+        
+        .admin-btn-close:hover {
+            background: rgba(255, 0, 110, 0.5);
+        }
+        
+        .admin-error {
+            color: #ff006e;
+            text-align: center;
+            margin-top: 15px;
+            display: none;
+        }
+        
+        /* Live Stream Section */
+        .live-stream-section {
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.1), rgba(131, 56, 236, 0.1));
+            border: 2px solid #00ff88;
+            border-radius: 10px;
+            padding: 30px;
+            margin: 40px 0;
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.2);
+        }
+        
+        .live-stream-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .live-indicator {
+            width: 12px;
+            height: 12px;
+            background: #ff006e;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% {
+                box-shadow: 0 0 0 0 rgba(255, 0, 110, 0.7);
+            }
+            50% {
+                box-shadow: 0 0 0 10px rgba(255, 0, 110, 0);
+            }
+        }
+        
+        .live-stream-container {
+            position: relative;
+            width: 100%;
+            padding-bottom: 56.25%;
+            height: 0;
+            overflow: hidden;
+            border-radius: 8px;
+            background: #0a0a0f;
+        }
+        
+        .live-stream-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+            border-radius: 8px;
+        }
+        
+        .stream-status {
+            margin-top: 15px;
+            padding: 15px;
+            background: rgba(0, 255, 136, 0.1);
+            border-left: 3px solid #00ff88;
+            border-radius: 5px;
+            color: #00ff88;
+        }
+    </style>
 </head>
 <body>
     <!-- Navigation -->
@@ -57,6 +256,35 @@
         </div>
     </nav>
 
+    <!-- Admin Button -->
+    <button class="admin-button" id="admin-btn" aria-label="Admin control panel" title="Admin Control">
+        <i class="fas fa-lock" aria-hidden="true"></i>
+    </button>
+
+    <!-- Admin Login Modal -->
+    <div class="admin-modal" id="admin-modal">
+        <div class="admin-modal-content">
+            <div class="admin-modal-header">
+                <i class="fas fa-lock" aria-hidden="true"></i> Admin Control
+            </div>
+            <form id="admin-form">
+                <div class="admin-form-group">
+                    <label for="admin-username">Username</label>
+                    <input type="text" id="admin-username" placeholder="Enter username" required>
+                </div>
+                <div class="admin-form-group">
+                    <label for="admin-password">Password</label>
+                    <input type="password" id="admin-password" placeholder="Enter password" required>
+                </div>
+                <div class="admin-error" id="admin-error">Invalid credentials</div>
+                <div class="admin-buttons">
+                    <button type="submit" class="admin-btn admin-btn-login">Login</button>
+                    <button type="button" class="admin-btn admin-btn-close" id="close-modal">Close</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Home Section -->
     <section id="home" class="section active" aria-label="Home">
         <div class="hero">
@@ -90,6 +318,24 @@
                     <div class="radar-ring"></div>
                     <div class="radar-center"></div>
                 </div>
+            </div>
+        </div>
+
+        <!-- Live Stream Section -->
+        <div class="live-stream-section">
+            <div class="live-stream-header">
+                <div class="live-indicator"></div>
+                <h2 style="margin: 0; color: #00ff88;"><i class="fas fa-broadcast-tower" aria-hidden="true"></i> Live Stream</h2>
+            </div>
+            <div class="live-stream-container">
+                <iframe id="live-stream-embed" 
+                        src="https://www.youtube.com/embed/live_stream?channel=CHANNEL_ID" 
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                        allowfullscreen>
+                </iframe>
+            </div>
+            <div class="stream-status">
+                <i class="fas fa-info-circle" aria-hidden="true"></i> Live stream from SkyStorm Data field operations. Updates during active weather.
             </div>
         </div>
 
@@ -394,5 +640,64 @@
     <!-- External scripts -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="app.js"></script>
+    
+    <script>
+        // Admin Authentication
+        const ADMIN_USERNAME = 'SkyStormData';
+        const ADMIN_PASSWORD = 'RonandJane2026';
+        
+        const adminBtn = document.getElementById('admin-btn');
+        const adminModal = document.getElementById('admin-modal');
+        const adminForm = document.getElementById('admin-form');
+        const closeModalBtn = document.getElementById('close-modal');
+        const adminError = document.getElementById('admin-error');
+        
+        // Open admin modal
+        adminBtn.addEventListener('click', () => {
+            adminModal.classList.add('active');
+            adminForm.reset();
+            adminError.style.display = 'none';
+        });
+        
+        // Close admin modal
+        closeModalBtn.addEventListener('click', () => {
+            adminModal.classList.remove('active');
+            adminError.style.display = 'none';
+        });
+        
+        // Close modal when clicking outside
+        adminModal.addEventListener('click', (e) => {
+            if (e.target === adminModal) {
+                adminModal.classList.remove('active');
+                adminError.style.display = 'none';
+            }
+        });
+        
+        // Handle admin login
+        adminForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const username = document.getElementById('admin-username').value;
+            const password = document.getElementById('admin-password').value;
+            
+            if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+                // Successful login
+                alert('Admin login successful! You now have access to admin controls.');
+                adminModal.classList.remove('active');
+                
+                // Here you can add code to show admin-only features or redirect to admin panel
+                // For example: window.location.href = '/admin-panel.html';
+                
+                // Store authentication state in session storage
+                sessionStorage.setItem('adminAuthenticated', 'true');
+                
+            } else {
+                // Failed login
+                adminError.style.display = 'block';
+                document.getElementById('admin-password').value = '';
+                document.getElementById('admin-password').focus();
+            }
+        });
+    </script>
 </body>
 </html>
