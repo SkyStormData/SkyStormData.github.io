@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="SkyStorm Data - Real-time storm tracking and research data collection across the Ohio Valley">
-    <meta name="theme-color" content="#0a0a0f">
+    <meta name="theme-color" content="#f0f4f8">
     <title>SkyStorm Data — Ohio Valley Storm Chasing</title>
     
     <!-- External stylesheets -->
@@ -16,6 +16,148 @@
     <link rel="stylesheet" href="styles.css">
     
     <style>
+        /* Background Storm Animation */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #f0f4f8 0%, #e8f1f8 50%, #f0f4f8 100%);
+            z-index: -2;
+            pointer-events: none;
+        }
+
+        /* Storm Cloud Animation */
+        .storm-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .storm-cloud {
+            position: absolute;
+            opacity: 0.15;
+            filter: blur(2px);
+        }
+
+        .cloud-1 {
+            width: 300px;
+            height: 120px;
+            background: radial-gradient(ellipse at 30% 40%, #2c3e50 0%, #34495e 40%, transparent 70%);
+            border-radius: 100px;
+            top: 10%;
+            left: -100px;
+            animation: drift 20s infinite ease-in-out;
+        }
+
+        .cloud-2 {
+            width: 250px;
+            height: 100px;
+            background: radial-gradient(ellipse at 50% 50%, #2c3e50 0%, #34495e 40%, transparent 70%);
+            border-radius: 100px;
+            top: 30%;
+            right: -80px;
+            animation: drift 25s infinite ease-in-out reverse;
+        }
+
+        .cloud-3 {
+            width: 350px;
+            height: 140px;
+            background: radial-gradient(ellipse at 40% 50%, #2c3e50 0%, #34495e 40%, transparent 70%);
+            border-radius: 100px;
+            top: 50%;
+            left: -120px;
+            animation: drift 30s infinite ease-in-out;
+        }
+
+        .cloud-4 {
+            width: 280px;
+            height: 110px;
+            background: radial-gradient(ellipse at 50% 50%, #2c3e50 0%, #34495e 40%, transparent 70%);
+            border-radius: 100px;
+            top: 70%;
+            right: -100px;
+            animation: drift 28s infinite ease-in-out reverse;
+        }
+
+        @keyframes drift {
+            0%, 100% { transform: translateX(0) translateY(0); }
+            50% { transform: translateX(100px) translateY(20px); }
+        }
+
+        /* Lightning Strike Animation */
+        .lightning-container {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+
+        .lightning {
+            position: absolute;
+            width: 3px;
+            background: linear-gradient(to bottom, #fff, #ffff00, #fff);
+            opacity: 0;
+            filter: blur(1px);
+        }
+
+        .lightning-1 {
+            height: 200px;
+            left: 15%;
+            top: 20%;
+            animation: strike 4s infinite ease-in-out;
+        }
+
+        .lightning-2 {
+            height: 250px;
+            left: 75%;
+            top: 15%;
+            animation: strike 5s 1s infinite ease-in-out;
+        }
+
+        .lightning-3 {
+            height: 180px;
+            left: 40%;
+            top: 35%;
+            animation: strike 6s 2s infinite ease-in-out;
+        }
+
+        .lightning-4 {
+            height: 220px;
+            left: 85%;
+            top: 50%;
+            animation: strike 5.5s 0.5s infinite ease-in-out;
+        }
+
+        @keyframes strike {
+            0%, 10%, 15%, 100% {
+                opacity: 0;
+                box-shadow: none;
+            }
+            11%, 14% {
+                opacity: 1;
+                box-shadow: 0 0 20px rgba(255, 255, 0, 0.8);
+            }
+        }
+
+        /* Light Mode Color Scheme */
+        :root {
+            --primary-text: #1a1a2e;
+            --secondary-text: #4a4a6a;
+            --bg-primary: #f0f4f8;
+            --bg-secondary: #ffffff;
+            --accent-primary: #ff006e;
+            --accent-secondary: #00d9ff;
+            --accent-success: #00ff88;
+            --border-color: #e0e8f0;
+        }
+
         /* Admin Modal Styles */
         .admin-button {
             position: fixed;
@@ -32,13 +174,14 @@
             align-items: center;
             justify-content: center;
             z-index: 100;
-            box-shadow: 0 0 20px rgba(255, 0, 110, 0.5);
+            box-shadow: 0 0 20px rgba(255, 0, 110, 0.3);
             transition: all 0.3s ease;
+            color: white;
         }
         
         .admin-button:hover {
             transform: scale(1.1);
-            box-shadow: 0 0 30px rgba(255, 0, 110, 0.8);
+            box-shadow: 0 0 30px rgba(255, 0, 110, 0.5);
         }
         
         .admin-modal {
@@ -49,7 +192,7 @@
             top: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.8);
+            background-color: rgba(0, 0, 0, 0.5);
         }
         
         .admin-modal.active {
@@ -59,19 +202,19 @@
         }
         
         .admin-modal-content {
-            background: linear-gradient(135deg, #0a0a0f, #1a1a2e);
-            border: 2px solid #00ff88;
+            background: linear-gradient(135deg, #ffffff, #f8f9fc);
+            border: 2px solid #00d9ff;
             border-radius: 10px;
             padding: 40px;
             width: 90%;
             max-width: 400px;
-            box-shadow: 0 0 30px rgba(0, 255, 136, 0.3);
+            box-shadow: 0 0 30px rgba(0, 217, 255, 0.2);
         }
         
         .admin-modal-header {
             font-size: 24px;
             font-weight: bold;
-            color: #00ff88;
+            color: #ff006e;
             margin-bottom: 30px;
             text-align: center;
         }
@@ -82,7 +225,7 @@
         
         .admin-form-group label {
             display: block;
-            color: #00ff88;
+            color: #1a1a2e;
             margin-bottom: 8px;
             font-weight: 600;
         }
@@ -90,21 +233,23 @@
         .admin-form-group input {
             width: 100%;
             padding: 12px;
-            border: 1px solid #00ff88;
-            background: rgba(0, 255, 136, 0.1);
-            color: #00ff88;
+            border: 2px solid #00d9ff;
+            background: rgba(0, 217, 255, 0.05);
+            color: #1a1a2e;
             border-radius: 5px;
             font-size: 16px;
             box-sizing: border-box;
+            transition: all 0.3s ease;
         }
         
         .admin-form-group input::placeholder {
-            color: rgba(0, 255, 136, 0.5);
+            color: rgba(26, 26, 46, 0.5);
         }
         
         .admin-form-group input:focus {
             outline: none;
-            box-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+            box-shadow: 0 0 10px rgba(0, 217, 255, 0.5);
+            border-color: #ff006e;
         }
         
         .admin-buttons {
@@ -125,22 +270,23 @@
         }
         
         .admin-btn-login {
-            background: #00ff88;
-            color: #0a0a0f;
+            background: linear-gradient(135deg, #ff006e, #8338ec);
+            color: white;
         }
         
         .admin-btn-login:hover {
-            box-shadow: 0 0 15px rgba(0, 255, 136, 0.5);
+            box-shadow: 0 0 15px rgba(255, 0, 110, 0.5);
+            transform: translateY(-2px);
         }
         
         .admin-btn-close {
-            background: rgba(255, 0, 110, 0.3);
+            background: rgba(255, 0, 110, 0.1);
             color: #ff006e;
-            border: 1px solid #ff006e;
+            border: 2px solid #ff006e;
         }
         
         .admin-btn-close:hover {
-            background: rgba(255, 0, 110, 0.5);
+            background: rgba(255, 0, 110, 0.2);
         }
         
         .admin-error {
@@ -148,16 +294,17 @@
             text-align: center;
             margin-top: 15px;
             display: none;
+            font-weight: 600;
         }
         
         /* Live Stream Section */
         .live-stream-section {
-            background: linear-gradient(135deg, rgba(0, 255, 136, 0.1), rgba(131, 56, 236, 0.1));
-            border: 2px solid #00ff88;
+            background: linear-gradient(135deg, rgba(0, 217, 255, 0.1), rgba(255, 0, 110, 0.05));
+            border: 2px solid #00d9ff;
             border-radius: 10px;
             padding: 30px;
             margin: 40px 0;
-            box-shadow: 0 0 20px rgba(0, 255, 136, 0.2);
+            box-shadow: 0 0 20px rgba(0, 217, 255, 0.1);
         }
         
         .live-stream-header {
@@ -191,7 +338,7 @@
             height: 0;
             overflow: hidden;
             border-radius: 8px;
-            background: #0a0a0f;
+            background: #f0f4f8;
         }
         
         .live-stream-container iframe {
@@ -207,14 +354,209 @@
         .stream-status {
             margin-top: 15px;
             padding: 15px;
-            background: rgba(0, 255, 136, 0.1);
-            border-left: 3px solid #00ff88;
+            background: rgba(0, 217, 255, 0.1);
+            border-left: 3px solid #00d9ff;
             border-radius: 5px;
-            color: #00ff88;
+            color: #1a1a2e;
+        }
+
+        /* Weather Section Styles */
+        .weather-section {
+            background: linear-gradient(135deg, rgba(255, 0, 110, 0.05), rgba(0, 217, 255, 0.05));
+            border: 2px solid #00d9ff;
+            border-radius: 12px;
+            padding: 30px;
+            margin: 30px 0;
+            box-shadow: 0 0 20px rgba(0, 217, 255, 0.1);
+        }
+
+        .current-weather {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .weather-main {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .weather-icon {
+            font-size: 80px;
+            color: #ff006e;
+        }
+
+        .weather-info h3 {
+            font-size: 24px;
+            color: #1a1a2e;
+            margin: 0;
+        }
+
+        .weather-description {
+            color: #4a4a6a;
+            font-size: 14px;
+            margin: 5px 0;
+        }
+
+        .weather-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .weather-stat {
+            background: rgba(255, 255, 255, 0.6);
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 3px solid #00d9ff;
+        }
+
+        .weather-stat label {
+            display: block;
+            color: #4a4a6a;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .weather-stat-value {
+            display: block;
+            color: #1a1a2e;
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .forecast-section h3 {
+            color: #1a1a2e;
+            margin-top: 0;
+            margin-bottom: 20px;
+            font-size: 20px;
+        }
+
+        .forecast-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        .forecast-card {
+            background: rgba(255, 255, 255, 0.7);
+            border: 1px solid #e0e8f0;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .forecast-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(255, 0, 110, 0.15);
+            border-color: #ff006e;
+        }
+
+        .forecast-day {
+            color: #4a4a6a;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .forecast-icon {
+            font-size: 32px;
+            margin: 10px 0;
+            color: #ff006e;
+        }
+
+        .forecast-temp {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 10px 0;
+        }
+
+        .forecast-high {
+            color: #1a1a2e;
+            font-weight: 700;
+        }
+
+        .forecast-low {
+            color: #4a4a6a;
+            font-weight: 600;
+        }
+
+        .forecast-condition {
+            color: #4a4a6a;
+            font-size: 12px;
+            margin-top: 8px;
+        }
+
+        .location-selector {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .location-selector input {
+            flex: 1;
+            padding: 10px 15px;
+            border: 2px solid #00d9ff;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.8);
+            color: #1a1a2e;
+            font-size: 14px;
+        }
+
+        .location-selector button {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #ff006e, #8338ec);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .location-selector button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 0, 110, 0.3);
+        }
+
+        @media (max-width: 768px) {
+            .current-weather {
+                grid-template-columns: 1fr;
+            }
+
+            .forecast-grid {
+                grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            }
+
+            .weather-main {
+                flex-direction: column;
+                text-align: center;
+            }
         }
     </style>
 </head>
 <body>
+    <!-- Storm Background -->
+    <div class="storm-background">
+        <div class="lightning-container">
+            <div class="lightning lightning-1"></div>
+            <div class="lightning lightning-2"></div>
+            <div class="lightning lightning-3"></div>
+            <div class="lightning lightning-4"></div>
+        </div>
+        <div class="cloud-1 storm-cloud"></div>
+        <div class="cloud-2 storm-cloud"></div>
+        <div class="cloud-3 storm-cloud"></div>
+        <div class="cloud-4 storm-cloud"></div>
+    </div>
+
     <!-- Navigation -->
     <nav class="main-nav" role="navigation" aria-label="Main navigation">
         <div class="nav-brand">
@@ -321,11 +663,28 @@
             </div>
         </div>
 
+        <!-- Current Weather Section -->
+        <div class="weather-section">
+            <div class="location-selector">
+                <input type="text" id="location-input" placeholder="Enter city name or allow location access" value="Current Location">
+                <button id="get-weather-btn" aria-label="Get weather for location">
+                    <i class="fas fa-map-marker-alt"></i> Get Weather
+                </button>
+            </div>
+
+            <div id="weather-container">
+                <div style="text-align: center; padding: 40px; color: #4a4a6a;">
+                    <i class="fas fa-spinner fa-spin" style="font-size: 32px; margin-bottom: 15px;"></i>
+                    <p>Loading weather data...</p>
+                </div>
+            </div>
+        </div>
+
         <!-- Live Stream Section -->
         <div class="live-stream-section">
             <div class="live-stream-header">
                 <div class="live-indicator"></div>
-                <h2 style="margin: 0; color: #00ff88;"><i class="fas fa-broadcast-tower" aria-hidden="true"></i> Live Stream</h2>
+                <h2 style="margin: 0; color: #ff006e;"><i class="fas fa-broadcast-tower" aria-hidden="true"></i> Live Stream</h2>
             </div>
             <div class="live-stream-container">
                 <iframe id="live-stream-embed" 
@@ -640,6 +999,7 @@
     <!-- External scripts -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="app.js"></script>
+    <script src="weather.js"></script>
     
     <script>
         // Admin Authentication
@@ -685,9 +1045,6 @@
                 alert('Admin login successful! You now have access to admin controls.');
                 adminModal.classList.remove('active');
                 
-                // Here you can add code to show admin-only features or redirect to admin panel
-                // For example: window.location.href = '/admin-panel.html';
-                
                 // Store authentication state in session storage
                 sessionStorage.setItem('adminAuthenticated', 'true');
                 
@@ -696,6 +1053,13 @@
                 adminError.style.display = 'block';
                 document.getElementById('admin-password').value = '';
                 document.getElementById('admin-password').focus();
+            }
+        });
+
+        // Initialize weather on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            if (typeof window.initializeWeather === 'function') {
+                window.initializeWeather();
             }
         });
     </script>
