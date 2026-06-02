@@ -273,7 +273,7 @@ function initGPS() {
     }
 }
 
-// Weather - FIXED COMPLETE URL
+// Weather - Fixed complete URL
 function fetchWeather() {
     const url = `https://api.open-meteo.com/v1/forecast?latitude=${userLat}&longitude=${userLon}&current=temperature_2m,relative_humidity_2m,dew_point_2m,surface_pressure,wind_speed_10m,wind_direction_10m&hourly=cape,lifted_index&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto`;
     
