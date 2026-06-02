@@ -273,9 +273,9 @@ function initGPS() {
     }
 }
 
-// Weather
+// Weather - FIXED COMPLETE URL
 function fetchWeather() {
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${userLat}&longitude=${userLon}&current=temperature_2m,relative_humidity_2m,dew_point_2m,surface_pressure,wind_speed_10m,wind_direction_10m&hourly=cape,lifted_index`;
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${userLat}&longitude=${userLon}&current=temperature_2m,relative_humidity_2m,dew_point_2m,surface_pressure,wind_speed_10m,wind_direction_10m&hourly=cape,lifted_index&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto`;
     
     fetch(url)
         .then(res => res.json())
@@ -303,6 +303,10 @@ function updateWeatherDisplay(data) {
     const cape = h.cape ? Math.round(h.cape[hi] || 0) : 0;
     const li = h.lifted_index ? h.lifted_index[hi] || 0 : 0;
     
+    // Calculate Downburst CAPE (DCAPE) - air mass falling from cloud base
+    // Simplified: use lower atmosphere instability
+    const dcape = Math.max(0, cape * 0.4); // Approximate 40% of full CAPE
+    
     // Update data panel
     updateElement('temp-value', temp);
     updateElement('home-temp', `${temp}°F`);
@@ -315,6 +319,7 @@ function updateWeatherDisplay(data) {
     updateElement('humidity-value', Math.round(c.relative_humidity_2m));
     updateElement('cape-value', cape);
     updateElement('home-cape', `${cape} J/kg`);
+    updateElement('dcape-value', Math.round(dcape));
     updateElement('li-value', li.toFixed(1));
     updateElement('lcl-value', Math.round((temp - dew) * 227));
     updateElement('lapse-value', (6.5 + (temp - dew) / 20).toFixed(1));
@@ -323,6 +328,9 @@ function updateWeatherDisplay(data) {
     // Update progress bars
     const capeBar = document.getElementById('cape-bar');
     if (capeBar) capeBar.style.width = Math.min(cape / 50, 100) + '%';
+    
+    const dcapeBar = document.getElementById('dcape-bar');
+    if (dcapeBar) dcapeBar.style.width = Math.min(dcape / 50, 100) + '%';
     
     const lclBar = document.getElementById('lcl-bar');
     if (lclBar) lclBar.style.width = Math.min((temp - dew) * 227 / 10000, 100) + '%';
