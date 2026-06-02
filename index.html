@@ -902,6 +902,11 @@
                 <span class="condition-label">Temperature</span>
             </div>
             <div class="condition-card">
+                <i class="fas fa-droplets" aria-hidden="true"></i>
+                <span class="condition-value" id="home-humidity">--</span>
+                <span class="condition-label">Humidity</span>
+            </div>
+            <div class="condition-card">
                 <i class="fas fa-wind" aria-hidden="true"></i>
                 <span class="condition-value" id="home-wind">--</span>
                 <span class="condition-label">Wind</span>
@@ -915,6 +920,11 @@
                 <i class="fas fa-fire" aria-hidden="true"></i>
                 <span class="condition-value" id="home-cape">--</span>
                 <span class="condition-label">CAPE</span>
+            </div>
+            <div class="condition-card">
+                <i class="fas fa-bolt" aria-hidden="true"></i>
+                <span class="condition-value" id="home-dcape">--</span>
+                <span class="condition-label">D CAPE</span>
             </div>
         </div>
     </section>
@@ -1002,35 +1012,39 @@
         </div>
     </section>
 
-    <!-- Data Section (Placeholder) -->
-    <section id="data" class="section" aria-label="Data">
-        <h2 class="section-title">Data Analysis</h2>
-        <p>Data section coming soon</p>
+    <!-- Data Section -->
+    <section id="data" class="section" aria-label="Storm Data">
+        <h2 class="section-title"><i class="fas fa-database" aria-hidden="true"></i> Research Data</h2>
+        <div class="data-container">
+            <div id="data-content">Loading...</div>
+        </div>
     </section>
 
-    <!-- Gallery Section (Placeholder) -->
-    <section id="gallery" class="section" aria-label="Gallery">
-        <h2 class="section-title">Storm Gallery</h2>
-        <p>Gallery coming soon</p>
+    <!-- Gallery Section -->
+    <section id="gallery" class="section" aria-label="Storm Gallery">
+        <h2 class="section-title"><i class="fas fa-images" aria-hidden="true"></i> Gallery</h2>
+        <div class="gallery-container">
+            <div id="gallery-content">Loading gallery...</div>
+        </div>
     </section>
 
-    <!-- Upload Section (Placeholder) -->
-    <section id="upload" class="section" aria-label="Upload">
-        <h2 class="section-title">Data Upload</h2>
-        <p>Upload section coming soon</p>
+    <!-- Upload Section -->
+    <section id="upload" class="section" aria-label="Upload Content">
+        <h2 class="section-title"><i class="fas fa-upload" aria-hidden="true"></i> Upload</h2>
+        <div class="upload-container">
+            <div id="upload-content">Upload section coming soon...</div>
+        </div>
     </section>
 
-    <!-- Store Section (Placeholder) -->
+    <!-- Store Section -->
     <section id="store" class="section" aria-label="Store">
-        <h2 class="section-title">SkyStorm Store</h2>
-        <p>Store coming soon</p>
+        <h2 class="section-title"><i class="fas fa-shopping-cart" aria-hidden="true"></i> Store</h2>
+        <div class="store-container">
+            <div id="store-content">Store coming soon...</div>
+        </div>
     </section>
 
-    <!-- External Libraries -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
-    <!-- Application Scripts - CRITICAL FOR DATA LOADING -->
-    <script src="weather.js"></script>
-    <script src="app.js"></script>
+    <!-- Scripts -->
+    <script src="script.js"></script>
 </body>
 </html>
