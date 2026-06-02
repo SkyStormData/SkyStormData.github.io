@@ -998,330 +998,39 @@
                 <div class="legend-item"><span class="legend-color flash-flood" aria-hidden="true"></span> Flash Flood</div>
                 <h4>Your Status</h4>
                 <div class="legend-item"><span class="legend-color safe-zone" aria-hidden="true"></span> Safe</div>
-                <div class="legend-item"><span class="legend-color caution-zone" aria-hidden="true"></span> Caution</div>
-                <div class="legend-item"><span class="legend-color danger-zone" aria-hidden="true"></span> Danger</div>
-            </div>
-        </div>
-        <div class="warnings-panel" aria-label="Active weather warnings">
-            <h3><i class="fas fa-bell" aria-hidden="true"></i> Active Alerts</h3>
-            <div id="warnings-list">
-                <p class="no-warnings">No active warnings in your area</p>
             </div>
         </div>
     </section>
 
-    <!-- Data Section -->
-    <section id="data" class="section" aria-label="Atmospheric Data">
-        <div class="data-header">
-            <h2><i class="fas fa-chart-line" aria-hidden="true"></i> Atmospheric Data</h2>
-            <span class="data-timestamp">Updated: <span id="data-time">--</span></span>
-        </div>
-        <div class="data-dashboard">
-            <div class="data-panel">
-                <h3><i class="fas fa-wind" aria-hidden="true"></i> Surface Observations</h3>
-                <div class="data-grid">
-                    <div class="data-item">
-                        <div class="data-icon"><i class="fas fa-temperature-high" aria-hidden="true"></i></div>
-                        <div class="data-info">
-                            <span class="data-value" id="temp-value">--</span>
-                            <span class="data-unit">°F</span>
-                        </div>
-                        <span class="data-label">Temperature</span>
-                    </div>
-                    <div class="data-item">
-                        <div class="data-icon"><i class="fas fa-tint" aria-hidden="true"></i></div>
-                        <div class="data-info">
-                            <span class="data-value" id="dewpoint-value">--</span>
-                            <span class="data-unit">°F</span>
-                        </div>
-                        <span class="data-label">Dew Point</span>
-                    </div>
-                    <div class="data-item">
-                        <div class="data-icon"><i class="fas fa-wind" aria-hidden="true"></i></div>
-                        <div class="data-info">
-                            <span class="data-value" id="wind-speed">--</span>
-                            <span class="data-unit">mph</span>
-                        </div>
-                        <span class="data-label">Wind Speed</span>
-                    </div>
-                    <div class="data-item">
-                        <div class="data-icon"><i class="fas fa-compass" aria-hidden="true"></i></div>
-                        <div class="data-info">
-                            <span class="data-value" id="wind-dir">--</span>
-                            <span class="data-unit">°</span>
-                        </div>
-                        <span class="data-label">Wind Direction</span>
-                    </div>
-                    <div class="data-item">
-                        <div class="data-icon"><i class="fas fa-gauge-high" aria-hidden="true"></i></div>
-                        <div class="data-info">
-                            <span class="data-value" id="pressure-value">--</span>
-                            <span class="data-unit">mb</span>
-                        </div>
-                        <span class="data-label">Pressure</span>
-                    </div>
-                    <div class="data-item">
-                        <div class="data-icon"><i class="fas fa-droplet" aria-hidden="true"></i></div>
-                        <div class="data-info">
-                            <span class="data-value" id="humidity-value">--</span>
-                            <span class="data-unit">%</span>
-                        </div>
-                        <span class="data-label">Humidity</span>
-                    </div>
-                </div>
-            </div>
-            <div class="data-panel">
-                <h3><i class="fas fa-layer-group" aria-hidden="true"></i> Sounding Parameters</h3>
-                <div class="sounding-grid">
-                    <div class="sounding-item critical">
-                        <div class="sounding-header">
-                            <span class="sounding-label">CAPE</span>
-                            <span class="sounding-desc">Instability</span>
-                        </div>
-                        <div class="sounding-value-container">
-                            <span class="sounding-value" id="cape-value">--</span>
-                            <span class="sounding-unit">J/kg</span>
-                        </div>
-                        <div class="sounding-bar"><div class="sounding-fill" id="cape-bar"></div></div>
-                    </div>
-                    <div class="sounding-item">
-                        <div class="sounding-header">
-                            <span class="sounding-label">LCL</span>
-                            <span class="sounding-desc">Cloud Base</span>
-                        </div>
-                        <div class="sounding-value-container">
-                            <span class="sounding-value" id="lcl-value">--</span>
-                            <span class="sounding-unit">ft</span>
-                        </div>
-                        <div class="sounding-bar"><div class="sounding-fill" id="lcl-bar"></div></div>
-                    </div>
-                    <div class="sounding-item">
-                        <div class="sounding-header">
-                            <span class="sounding-label">Lapse Rate</span>
-                            <span class="sounding-desc">Temp Change</span>
-                        </div>
-                        <div class="sounding-value-container">
-                            <span class="sounding-value" id="lapse-value">--</span>
-                            <span class="sounding-unit">°C/km</span>
-                        </div>
-                        <div class="sounding-bar"><div class="sounding-fill" id="lapse-bar"></div></div>
-                    </div>
-                    <div class="sounding-item">
-                        <div class="sounding-header">
-                            <span class="sounding-label">LI</span>
-                            <span class="sounding-desc">Lifted Index</span>
-                        </div>
-                        <div class="sounding-value-container">
-                            <span class="sounding-value" id="li-value">--</span>
-                            <span class="sounding-unit">°C</span>
-                        </div>
-                        <div class="sounding-bar"><div class="sounding-fill" id="li-bar"></div></div>
-                    </div>
-                </div>
-            </div>
-            <div class="data-panel" style="grid-column:1/-1">
-                <h3><i class="fas fa-exclamation-circle" aria-hidden="true"></i> Threat Assessment</h3>
-                <div class="threat-level" id="threat-level">LOW</div>
-                <div class="threat-bar-container"><div class="threat-bar" id="threat-bar"></div></div>
-                <div class="threat-labels"><span>LOW</span><span>MODERATE</span><span>HIGH</span><span>EXTREME</span></div>
-                <div class="threat-details" id="threat-details"><p>Analyzing conditions...</p></div>
-            </div>
-        </div>
+    <!-- Data Section (Placeholder) -->
+    <section id="data" class="section" aria-label="Data">
+        <h2 class="section-title">Data Analysis</h2>
+        <p>Data section coming soon</p>
     </section>
 
-    <!-- Gallery Section -->
-    <section id="gallery" class="section" aria-label="Storm Gallery">
-        <div class="gallery-header">
-            <h2><i class="fas fa-images" aria-hidden="true"></i> Storm Gallery</h2>
-            <p>Storms chased across the Ohio Valley</p>
-        </div>
-        <div class="gallery-tabs">
-            <button class="gallery-tab active" data-tab="videos" aria-selected="true">Videos</button>
-            <button class="gallery-tab" data-tab="photos" aria-selected="false">Photos</button>
-        </div>
-        <div class="gallery-content" id="videos-gallery">
-            <div class="video-grid" id="video-grid"></div>
-        </div>
-        <div class="gallery-content hidden" id="photos-gallery">
-            <div class="photo-grid" id="photo-grid"></div>
-        </div>
-        <div class="modal" id="media-modal" role="dialog" aria-labelledby="modal-title" aria-hidden="true">
-            <div class="modal-content">
-                <button class="modal-close" aria-label="Close dialog">&times;</button>
-                <h3 id="modal-title">Add Media</h3>
-                <form id="media-form">
-                    <div class="form-group">
-                        <label for="media-url">URL</label>
-                        <input type="url" id="media-url" required aria-required="true">
-                    </div>
-                    <div class="form-group">
-                        <label for="media-title">Title</label>
-                        <input type="text" id="media-title" required aria-required="true">
-                    </div>
-                    <div class="form-group">
-                        <label for="media-date">Date</label>
-                        <input type="date" id="media-date" required aria-required="true">
-                    </div>
-                    <div class="form-group">
-                        <label for="media-location">Location</label>
-                        <input type="text" id="media-location">
-                    </div>
-                    <button type="submit" class="submit-btn">Add to Gallery</button>
-                </form>
-            </div>
-        </div>
+    <!-- Gallery Section (Placeholder) -->
+    <section id="gallery" class="section" aria-label="Gallery">
+        <h2 class="section-title">Storm Gallery</h2>
+        <p>Gallery coming soon</p>
     </section>
 
-    <!-- Upload Section -->
-    <section id="upload" class="section" aria-label="Data Upload">
-        <div class="upload-header">
-            <h2><i class="fas fa-upload" aria-hidden="true"></i> Data Upload</h2>
-            <p>Upload chase data (CSV/JSON)</p>
-        </div>
-        <div class="upload-zone" id="upload-zone" role="button" tabindex="0" aria-label="Upload zone: drag and drop or click to select file">
-            <i class="fas fa-cloud-upload-alt" aria-hidden="true"></i>
-            <h3>Drop your data file here</h3>
-            <p>or click to browse</p>
-            <input type="file" id="file-input" accept=".csv,.json" aria-label="File input" hidden>
-        </div>
+    <!-- Upload Section (Placeholder) -->
+    <section id="upload" class="section" aria-label="Upload">
+        <h2 class="section-title">Data Upload</h2>
+        <p>Upload section coming soon</p>
     </section>
 
-    <!-- Store Section -->
+    <!-- Store Section (Placeholder) -->
     <section id="store" class="section" aria-label="Store">
-        <div class="store-container">
-            <div class="store-icon" aria-hidden="true"><i class="fas fa-shopping-bag"></i></div>
-            <h2 class="store-title"><i class="fas fa-bolt" aria-hidden="true"></i> Store — Coming Soon</h2>
-            <p class="store-subtitle">Storm gear dropping soon ⚡</p>
-            <div class="store-grid">
-                <div class="store-card">
-                    <i class="fas fa-tshirt" aria-hidden="true"></i>
-                    <h3>Apparel</h3>
-                    <p>Shirts, hoodies & hats</p>
-                </div>
-                <div class="store-card">
-                    <i class="fas fa-mug-hot" aria-hidden="true"></i>
-                    <h3>Accessories</h3>
-                    <p>Mugs, stickers & more</p>
-                </div>
-                <div class="store-card">
-                    <i class="fas fa-print" aria-hidden="true"></i>
-                    <h3>Prints</h3>
-                    <p>Storm photography</p>
-                </div>
-            </div>
-        </div>
+        <h2 class="section-title">SkyStorm Store</h2>
+        <p>Store coming soon</p>
     </section>
 
-    <!-- Footer -->
-    <footer class="main-footer" role="contentinfo">
-        <div class="footer-content">
-            <div class="footer-brand">
-                <span class="brand-text">SKYSTORM<span class="brand-accent">DATA</span></span>
-                <p>Ohio Valley Storm Chasing</p>
-            </div>
-            <div class="footer-links">
-                <a href="https://www.spc.noaa.gov/" target="_blank" rel="noopener noreferrer">SPC</a>
-                <a href="https://www.weather.gov/" target="_blank" rel="noopener noreferrer">NWS</a>
-                <a href="https://radar.weather.gov/" target="_blank" rel="noopener noreferrer">Radar</a>
-            </div>
-        </div>
-        <div class="footer-bottom">
-            <p>© 2024 SkyStorm Data LLC</p>
-        </div>
-    </footer>
-
-    <!-- External scripts -->
+    <!-- External Libraries -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="app.js"></script>
-    <script src="weather.js"></script>
-    <script src="livestream.js"></script>
-    
-    <script>
-        // Admin Authentication
-        const ADMIN_USERNAME = 'SkyStormData';
-        const ADMIN_PASSWORD = 'RonandJane2026';
-        
-        const adminBtn = document.getElementById('admin-btn');
-        const adminModal = document.getElementById('admin-modal');
-        const adminForm = document.getElementById('admin-form');
-        const closeModalBtn = document.getElementById('close-modal');
-        const adminError = document.getElementById('admin-error');
-        
-        // Open admin modal
-        adminBtn.addEventListener('click', () => {
-            adminModal.classList.add('active');
-            adminForm.reset();
-            adminError.style.display = 'none';
-        });
-        
-        // Close admin modal
-        closeModalBtn.addEventListener('click', () => {
-            adminModal.classList.remove('active');
-            adminError.style.display = 'none';
-        });
-        
-        // Close modal when clicking outside
-        adminModal.addEventListener('click', (e) => {
-            if (e.target === adminModal) {
-                adminModal.classList.remove('active');
-                adminError.style.display = 'none';
-            }
-        });
-        
-        // Handle admin login
-        adminForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            
-            const username = document.getElementById('admin-username').value;
-            const password = document.getElementById('admin-password').value;
-            
-            if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
-                // Successful login
-                alert('Admin login successful! You now have access to stream controls.');
-                adminModal.classList.remove('active');
-                
-                // Store authentication state in session storage
-                sessionStorage.setItem('adminAuthenticated', 'true');
-                
-                // Show admin controls
-                const adminControls = document.getElementById('admin-controls');
-                if (adminControls) {
-                    adminControls.style.display = 'flex';
-                }
-                
-                // Notify livestream module
-                if (window.initializeStreamControls) {
-                    window.initializeStreamControls();
-                }
-                
-            } else {
-                // Failed login
-                adminError.style.display = 'block';
-                document.getElementById('admin-password').value = '';
-                document.getElementById('admin-password').focus();
-            }
-        });
 
-        // Initialize weather on page load
-        document.addEventListener('DOMContentLoaded', () => {
-            if (typeof window.initializeWeather === 'function') {
-                window.initializeWeather();
-            }
-            if (typeof window.initializeLivestream === 'function') {
-                window.initializeLivestream();
-            }
-            
-            // Check if admin is already authenticated
-            if (sessionStorage.getItem('adminAuthenticated') === 'true') {
-                const adminControls = document.getElementById('admin-controls');
-                if (adminControls) {
-                    adminControls.style.display = 'flex';
-                }
-                if (window.initializeStreamControls) {
-                    window.initializeStreamControls();
-                }
-            }
-        });
-    </script>
+    <!-- Application Scripts - CRITICAL FOR DATA LOADING -->
+    <script src="weather.js"></script>
+    <script src="app.js"></script>
 </body>
 </html>
