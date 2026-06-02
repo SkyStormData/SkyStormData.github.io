@@ -20,6 +20,8 @@ async function initializeWeather() {
                         latitude: position.coords.latitude,
                         longitude: position.coords.longitude
                     };
+                    // Reverse geocode to get location name
+                    await getLocationName(userCoordinates.latitude, userCoordinates.longitude);
                     await fetchAndDisplayWeather(userCoordinates.latitude, userCoordinates.longitude);
                 },
                 (error) => {
@@ -29,6 +31,7 @@ async function initializeWeather() {
                         latitude: 39.1031,
                         longitude: -84.5120
                     };
+                    currentLocationName = 'Cincinnati, OH';
                     fetchAndDisplayWeather(39.1031, -84.5120);
                 }
             );
@@ -38,6 +41,7 @@ async function initializeWeather() {
                 latitude: 39.1031,
                 longitude: -84.5120
             };
+            currentLocationName = 'Cincinnati, OH';
             fetchAndDisplayWeather(39.1031, -84.5120);
         }
     } catch (error) {
@@ -47,6 +51,27 @@ async function initializeWeather() {
 
     // Setup event listeners
     setupEventListeners();
+}
+
+/**
+ * Get location name from coordinates
+ */
+async function getLocationName(lat, lon) {
+    try {
+        const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`
+        );
+        const data = await response.json();
+        
+        if (data.address) {
+            const city = data.address.city || data.address.town || data.address.county || 'Your Location';
+            const state = data.address.state || '';
+            currentLocationName = state ? `${city}, ${state}` : city;
+        }
+    } catch (error) {
+        console.warn('Could not get location name:', error);
+        currentLocationName = 'Your Location';
+    }
 }
 
 /**
@@ -91,7 +116,7 @@ async function searchLocation(locationName) {
             const result = data.results[0];
             const latitude = result.latitude;
             const longitude = result.longitude;
-            currentLocationName = `${result.name}, ${result.admin1 || result.country}`;
+            currentLocationName = `${result.name}${result.admin1 ? ', ' + result.admin1 : ''}${result.country ? ', ' + result.country : ''}`;
             
             document.getElementById('location-input').value = currentLocationName;
             await fetchAndDisplayWeather(latitude, longitude);
@@ -113,14 +138,21 @@ async function fetchAndDisplayWeather(latitude, longitude) {
             latitude: latitude,
             longitude: longitude,
             current: 'temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m,wind_direction_10m',
-            hourly: 'temperature_2m,precipitation_probability,weather_code',
-            daily: 'weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max',
+            daily: 'weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max,precipitation_probability_max',
             timezone: 'auto',
+            temperature_unit: 'fahrenheit',
+            wind_speed_unit: 'mph',
+            precipitation_unit: 'inch',
             forecast_days: 5
         });
 
         const response = await fetch(`${WEATHER_API_BASE}?${params}`);
         const data = await response.json();
+
+        if (!data.current) {
+            displayWeatherError('Could not fetch weather data');
+            return;
+        }
 
         displayCurrentWeather(data);
         displayForecast(data);
@@ -146,6 +178,7 @@ function displayCurrentWeather(data) {
     const humidity = current.relative_humidity_2m;
     const windSpeed = Math.round(current.wind_speed_10m);
     const windDirection = getWindDirection(current.wind_direction_10m);
+    const precipitation = current.precipitation || 0;
 
     const currentWeatherHTML = `
         <div class="current-weather">
@@ -174,6 +207,10 @@ function displayCurrentWeather(data) {
                     <label>Location</label>
                     <span class="weather-stat-value" style="font-size: 14px;">${currentLocationName}</span>
                 </div>
+                <div class="weather-stat">
+                    <label>Precipitation</label>
+                    <span class="weather-stat-value">${precipitation.toFixed(2)}"</span>
+                </div>
             </div>
         </div>
     `;
@@ -198,6 +235,8 @@ function displayForecast(data) {
         const weatherCode = daily.weather_code[i];
         const weatherIcon = getWeatherIcon(weatherCode);
         const weatherDesc = getWeatherDescription(weatherCode);
+        const precipProb = daily.precipitation_probability_max[i] || 0;
+        const precipAmount = daily.precipitation_sum[i] || 0;
 
         forecastHTML += `
             <div class="forecast-card">
@@ -208,6 +247,9 @@ function displayForecast(data) {
                     <span class="forecast-low">${minTemp}°</span>
                 </div>
                 <div class="forecast-condition">${weatherDesc}</div>
+                <div class="forecast-condition" style="font-size: 11px; margin-top: 5px;">
+                    💧 ${precipProb}% | ${precipAmount.toFixed(1)}"
+                </div>
             </div>
         `;
     }
