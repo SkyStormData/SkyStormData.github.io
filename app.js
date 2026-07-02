@@ -96,8 +96,10 @@ function showGalleryTab(tab) {
         t.setAttribute('aria-selected', isActive);
     });
     
-    document.getElementById('videos-gallery').classList.toggle('hidden', tab !== 'videos');
-    document.getElementById('photos-gallery').classList.toggle('hidden', tab !== 'photos');
+    const videosGallery = document.getElementById('videos-gallery');
+    const photosGallery = document.getElementById('photos-gallery');
+    if (videosGallery) videosGallery.classList.toggle('hidden', tab !== 'videos');
+    if (photosGallery) photosGallery.classList.toggle('hidden', tab !== 'photos');
 }
 
 function renderGallery() {
@@ -159,14 +161,21 @@ function extractYTId(url) {
 
 function openModal(type) {
     currentMediaType = type;
-    document.getElementById('modal-title').textContent = type === 'video' ? 'Add YouTube Video' : 'Add Photo';
-    document.getElementById('media-modal').classList.add('active');
-    document.getElementById('media-modal').setAttribute('aria-hidden', 'false');
+    const titleEl = document.getElementById('modal-title');
+    if (titleEl) titleEl.textContent = type === 'video' ? 'Add YouTube Video' : 'Add Photo';
+    const modal = document.getElementById('media-modal');
+    if (modal) {
+        modal.classList.add('active');
+        modal.setAttribute('aria-hidden', 'false');
+    }
 }
 
 function closeModal() {
-    document.getElementById('media-modal').classList.remove('active');
-    document.getElementById('media-modal').setAttribute('aria-hidden', 'true');
+    const modal = document.getElementById('media-modal');
+    if (modal) {
+        modal.classList.remove('active');
+        modal.setAttribute('aria-hidden', 'true');
+    }
 }
 
 function handleMediaSubmit(e) {
@@ -189,7 +198,8 @@ function handleMediaSubmit(e) {
     
     renderGallery();
     closeModal();
-    document.getElementById('media-form').reset();
+    const form = document.getElementById('media-form');
+    if (form) form.reset();
 }
 
 // Map
@@ -275,7 +285,10 @@ function initGPS() {
 
 // Weather - Fixed complete URL
 function fetchWeather() {
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${userLat}&longitude=${userLon}&current=temperature_2m,relative_humidity_2m,dew_point_2m,surface_pressure,wind_speed_10m,wind_direction_10m&hourly=cape,lifted_index&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto`;
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${userLat}&longitude=${userLon}` +
+        `&current=temperature_2m,relative_humidity_2m,dew_point_2m,surface_pressure,wind_speed_10m,wind_direction_10m` +
+        `&hourly=cape,lifted_index,convective_inhibition` +
+        `&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto`;
     
     fetch(url)
         .then(res => res.json())
